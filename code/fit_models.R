@@ -23,9 +23,10 @@ library(tidyverse) # Data science functions
 library(dplyr)     # Data wrangling
 library(rjags)     # Fitting Bayesian models with JAGS
 library(coda)      # MCMC summaries
+library(ggmcmc)    # MCMC-to-dataframe functions
 # library(devtools) # For installing packages from GitHub
 # install_github("atredennick/ecoforecastR") # get latest version
-library(ecoforecastR) # MCMC manipulation (by M. Dietze)
+library(ecoforecastR) # MCMC manipulation (by M. Dietze; modified by A. Tredennick)
 
 
 
@@ -61,8 +62,8 @@ my_model <- "
     b1 ~ dnorm(0,0.0001)      # effect of snow
     
     #### Initial Conditions
-    z.exp[1] ~ dnorm(Nobs[1], tau_obs[1]) # varies around observed abundance at t = 1
-    z[1] <- log(z.exp[1])
+    z[1] ~ dnorm(Nobs[1], tau_obs[1]) # varies around observed abundance at t = 1
+    zlog[1] <- log(z[1])
     
     #### Process Model
     for(t in 2:npreds){
@@ -70,16 +71,16 @@ my_model <- "
       # mu[t] <- max( 1, log( z[t-1]*exp(r + b*z[t-1] + b1*x[t]) ) )
       
       # Gompertz
-      mu[t] <- z[t-1] + r + b*z[t-1] + b1*x[t]
-      z[t] ~ dnorm(mu[t], tau_proc)
-      z.exp[t] <- exp(z[t])
+      mu[t] <- zlog[t-1] + r + b*zlog[t-1] + b1*x[t]
+      zlog[t] ~ dnorm(mu[t], tau_proc)
+      z[t] <- exp(zlog[t])
     }
     
     #### Data Model
     for(j in 2:n){
       # Nobs[j] ~ dnorm(z.exp[j], tau_obs[j])
       # Nobs[j] ~ dpois(z.exp[j])
-      p[j] <- eta/(eta + z.exp[j])
+      p[j] <- eta/(eta + z[j])
       Nobs [j] ~ dnegbin(p[j], eta)
     }
     
@@ -91,10 +92,10 @@ my_model <- "
       # Simulate new data
       # Nnew[i] ~ dnorm(z.exp[i], tau_obs[i])
       # Nnew[i] ~ dpois(z.exp[i])
-      p2[i] <- eta/(eta + z.exp[i])
+      p2[i] <- eta/(eta + z[i])
       Nnew [i] ~ dnegbin(p2[i], eta)
-      sqerr[i] <- (Nobs[i] - z.exp[i])^2
-      sqerr_new[i] <- (Nnew[i] - z.exp[i])^2
+      sqerr[i] <- (Nobs[i] - z[i])^2
+      sqerr_new[i] <- (Nnew[i] - z[i])^2
     }
     fit  <- sum(sqerr[])
     fit.new <- sum(sqerr_new[])
@@ -117,11 +118,11 @@ training_dat   <- filter(bison_dat, set == "training")
 validation_dat <- filter(bison_dat, set == "validation")
 
 ##  Set up SWE knowns (2011-2017), relative to scaling of observations
-swe_mean     <- mean(training_dat$mean_snow_water_equiv_mm)
-swe_sd       <- sd(training_dat$mean_snow_water_equiv_mm)
+swe_mean     <- mean(training_dat$accum_snow_water_equiv_mm)
+swe_sd       <- sd(training_dat$accum_snow_water_equiv_mm)
 forecast_swe <- snow_ynp %>%
   filter(year %in% validation_dat$year) %>%
-  pull(mean_snow_water_equiv_mm)
+  pull(accum_snow_water_equiv_mm)
 scl_fut_swe  <- (forecast_swe - swe_mean) / swe_sd
 
 ##  Set initial values for unkown parameters
@@ -149,11 +150,11 @@ inits <- list(
 mydat <- list(Nobs    = round(training_dat$count.mean), # mean counts
               n       = nrow(training_dat), # number of observations
               tau_obs = 1/training_dat$count.sd^2, # transform s.d. to precision
-              x       = c(as.numeric(scale(training_dat$mean_snow_water_equiv_mm)),scl_fut_swe), # snow depth, plus forecast years
+              x       = c(as.numeric(scale(training_dat$accum_snow_water_equiv_mm)),scl_fut_swe), # snow depth, plus forecast years
               npreds  = nrow(training_dat)+nrow(validation_dat)) # number of total predictions (obs + forecast)
 
 ##  Random variables to collect
-out_variables <- c("r", "b", "b1", "eta", "sigma_proc", "z.exp", "pvalue", "fit", "fit.new")
+out_variables <- c("r", "b", "b1", "eta", "sigma_proc", "z", "pvalue", "fit", "fit.new")
 
 ##  Send to JAGS
 mc3     <- jags.model(file = textConnection(my_model), 
@@ -172,6 +173,11 @@ ggs(mc3.out) %>%
   ggplot(aes(x=fit, y=fit.new))+
    geom_point()+
    geom_abline(aes(intercept=0, slope=1), color="red")
+
+ggs(mc3.out) %>%
+  filter(Parameter %in% c("b1")) %>%
+  ggplot(aes(x=value))+
+  geom_histogram()
 
 outstats <- summary(mc3.out)$stat
 outquant <- summary(mc3.out)$quantile
