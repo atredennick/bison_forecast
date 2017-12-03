@@ -53,6 +53,7 @@ my_model <- "
     #### Variance Priors
     sigma_proc ~ dgamma(0.01,0.01)
     tau_proc <- 1/sigma_proc^2
+    eta ~ dunif(0, 50)
     
     #### Fixed Effects Priors
     r  ~ dnorm(0.1, 1/0.02^2) # intrinsic growth rate, informed prior
@@ -60,19 +61,45 @@ my_model <- "
     b1 ~ dnorm(0,0.0001)      # effect of snow
     
     #### Initial Conditions
-    z[1] ~ dnorm(Nobs[1], tau_obs[1]) # varies around observed abundance at t = 1
+    z.exp[1] ~ dnorm(Nobs[1], tau_obs[1]) # varies around observed abundance at t = 1
+    z[1] <- log(z.exp[1])
     
     #### Process Model
     for(t in 2:npreds){
-      mu[t] <- max( 1, log( z[t-1]*exp(r + b*z[t-1] + b1*x[t]) ) )
-      z[t] ~ dlnorm(mu[t], tau_proc)
+      # Ricker
+      # mu[t] <- max( 1, log( z[t-1]*exp(r + b*z[t-1] + b1*x[t]) ) )
+      
+      # Gompertz
+      mu[t] <- z[t-1] + r + b*z[t-1] + b1*x[t]
+      z[t] ~ dnorm(mu[t], tau_proc)
+      z.exp[t] <- exp(z[t])
     }
     
     #### Data Model
     for(j in 2:n){
-      Nobs[j] ~ dnorm(z[j], tau_obs[j])
+      # Nobs[j] ~ dnorm(z.exp[j], tau_obs[j])
+      # Nobs[j] ~ dpois(z.exp[j])
+      p[j] <- eta/(eta + z.exp[j])
+      Nobs [j] ~ dnegbin(p[j], eta)
     }
-  
+    
+    ####  Derived Quantities for Model Evaluation
+    for(i in 1:n){
+      # For autocorrelation test
+      epsilon.obs[i] <- Nobs[i] - z[i]
+
+      # Simulate new data
+      # Nnew[i] ~ dnorm(z.exp[i], tau_obs[i])
+      # Nnew[i] ~ dpois(z.exp[i])
+      p2[i] <- eta/(eta + z.exp[i])
+      Nnew [i] ~ dnegbin(p2[i], eta)
+      sqerr[i] <- (Nobs[i] - z.exp[i])^2
+      sqerr_new[i] <- (Nnew[i] - z.exp[i])^2
+    }
+    fit  <- sum(sqerr[])
+    fit.new <- sum(sqerr_new[])
+    pvalue <- step(fit.new-fit)
+
   }"
 
 
@@ -119,56 +146,67 @@ inits <- list(
 ####  FIT AND FORECAST WITH KNOWN SWE
 ####
 ##  Prepare data list
-mydat <- list(Nobs    = training_dat$count.mean, # mean counts
+mydat <- list(Nobs    = round(training_dat$count.mean), # mean counts
               n       = nrow(training_dat), # number of observations
               tau_obs = 1/training_dat$count.sd^2, # transform s.d. to precision
               x       = c(as.numeric(scale(training_dat$mean_snow_water_equiv_mm)),scl_fut_swe), # snow depth, plus forecast years
               npreds  = nrow(training_dat)+nrow(validation_dat)) # number of total predictions (obs + forecast)
 
 ##  Random variables to collect
-out_variables <- c("r", "b", "b1", "sigma_proc", "z")
+out_variables <- c("r", "b", "b1", "eta", "sigma_proc", "z.exp", "pvalue", "fit", "fit.new")
 
 ##  Send to JAGS
 mc3     <- jags.model(file = textConnection(my_model), 
                       data = mydat, 
                       n.chains = length(inits), 
-                      n.adapt = 50000, 
+                      n.adapt = 5000, 
                       inits = inits) 
-           update(mc3, n.iter = 100000) 
+           update(mc3, n.iter = 10000) 
 mc3.out <- coda.samples(model=mc3, 
                         variable.names=out_variables, 
-                        n.iter=100000) 
+                        n.iter=10000) 
+
+ggs(mc3.out) %>%
+  filter(Parameter %in% c("fit", "fit.new")) %>%
+  spread(Parameter, value) %>%
+  ggplot(aes(x=fit, y=fit.new))+
+   geom_point()+
+   geom_abline(aes(intercept=0, slope=1), color="red")
+
+outstats <- summary(mc3.out)$stat
+outquant <- summary(mc3.out)$quantile
+outstats[which(rownames(outstats)=="pvalue"),"Mean"]
 
 ##  Split MCMC output for file constraints
-saveRDS(mc3.out[[1]],"../results/swe_est_posteriors_chain1.RDS")
-saveRDS(mc3.out[[2]],"../results/swe_est_posteriors_chain2.RDS")
-saveRDS(mc3.out[[3]],"../results/swe_est_posteriors_chain3.RDS")
-
-
-
-####
-####  FIT AND FORECAST ASSUMING AVG SWE
-####
-scl_fut_swe[] <- 0 # average is 0 by definition
-##  Prepare data list
-mydat <- list(Nobs    = training_dat$count.mean, # mean counts
-              n       = nrow(training_dat), # number of observations
-              tau_obs = 1/training_dat$count.sd^2, # transform s.d. to precision
-              x       = c(as.numeric(scale(training_dat$mean_snow_water_equiv_mm)),scl_fut_swe), # snow depth, plus forecast years
-              npreds  = nrow(training_dat)+nrow(validation_dat)) # number of total predictions (obs + forecast)
-
-##  Random variables to collect
-out_variables <- c("r", "b", "b1", "sigma_proc", "z")
-
-##  Send to JAGS
-mc3     <- jags.model(file=textConnection(my_model), data=mydat, n.chains=3, n.adapt = 50000) 
-update(mc3, n.iter = 100000) 
-mc3.out <- coda.samples(model=mc3, 
-                        variable.names=out_variables, 
-                        n.iter=100000) 
-
-##  Split MCMC output for file constraints
-saveRDS(mc3.out[[1]],"../results/swe_avg_posteriors_chain1.RDS")
-saveRDS(mc3.out[[2]],"../results/swe_avg_posteriors_chain2.RDS")
-saveRDS(mc3.out[[3]],"../results/swe_avg_posteriors_chain3.RDS")
-
+# saveRDS(mc3.out[[1]],"../results/swe_est_posteriors_chain1.RDS")
+# saveRDS(mc3.out[[2]],"../results/swe_est_posteriors_chain2.RDS")
+# saveRDS(mc3.out[[3]],"../results/swe_est_posteriors_chain3.RDS")
+# 
+# 
+# 
+# ####
+# ####  FIT AND FORECAST ASSUMING AVG SWE
+# ####
+# scl_fut_swe[] <- 0 # average is 0 by definition
+# ##  Prepare data list
+# mydat <- list(Nobs    = training_dat$count.mean, # mean counts
+#               n       = nrow(training_dat), # number of observations
+#               tau_obs = 1/training_dat$count.sd^2, # transform s.d. to precision
+#               x       = c(as.numeric(scale(training_dat$mean_snow_water_equiv_mm)),scl_fut_swe), # snow depth, plus forecast years
+#               npreds  = nrow(training_dat)+nrow(validation_dat)) # number of total predictions (obs + forecast)
+# 
+# ##  Random variables to collect
+# out_variables <- c("r", "b", "b1", "sigma_proc", "z")
+# 
+# ##  Send to JAGS
+# mc3     <- jags.model(file=textConnection(my_model), data=mydat, n.chains=3, n.adapt = 50000) 
+# update(mc3, n.iter = 100000) 
+# mc3.out <- coda.samples(model=mc3, 
+#                         variable.names=out_variables, 
+#                         n.iter=100000) 
+# 
+# ##  Split MCMC output for file constraints
+# saveRDS(mc3.out[[1]],"../results/swe_avg_posteriors_chain1.RDS")
+# saveRDS(mc3.out[[2]],"../results/swe_avg_posteriors_chain2.RDS")
+# saveRDS(mc3.out[[3]],"../results/swe_avg_posteriors_chain3.RDS")
+# 
