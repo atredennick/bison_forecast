@@ -58,30 +58,25 @@ my_model <- "
     
     #### Fixed Effects Priors
     r  ~ dnorm(0.1, 1/0.02^2) # intrinsic growth rate, informed prior
-    b  ~ dnorm(0,0.0001)      # strength of density dependence (r/K)
+    b  ~ dnorm(0,0.0001)      # strength of density dependence
     b1 ~ dnorm(0,0.0001)      # effect of snow
     
     #### Initial Conditions
     z[1] ~ dnorm(Nobs[1], tau_obs[1]) # varies around observed abundance at t = 1
-    zlog[1] <- log(z[1])
+    zlog[1] <- log(z[1]) # set first zlog
     
     #### Process Model
     for(t in 2:npreds){
-      # Ricker
-      # mu[t] <- max( 1, log( z[t-1]*exp(r + b*z[t-1] + b1*x[t]) ) )
-      
-      # Gompertz
+      # Gompertz growth, on log scale
       mu[t] <- zlog[t-1] + r + b*zlog[t-1] + b1*x[t]
       zlog[t] ~ dnorm(mu[t], tau_proc)
-      z[t] <- exp(zlog[t])
+      z[t] <- exp(zlog[t]) # back transform to arithmetic scale
     }
     
     #### Data Model
     for(j in 2:n){
-      # Nobs[j] ~ dnorm(z.exp[j], tau_obs[j])
-      # Nobs[j] ~ dpois(z.exp[j])
-      p[j] <- eta/(eta + z[j])
-      Nobs [j] ~ dnegbin(p[j], eta)
+      p[j] <- eta/(eta + z[j]) # calculate NB centrality parameter
+      Nobs [j] ~ dnegbin(p[j], eta) # NB likelihood
     }
     
     ####  Derived Quantities for Model Evaluation
@@ -97,9 +92,9 @@ my_model <- "
       sqerr[i] <- (Nobs[i] - z[i])^2
       sqerr_new[i] <- (Nnew[i] - z[i])^2
     }
-    fit  <- sum(sqerr[])
+    fit     <- sum(sqerr[])
     fit.new <- sum(sqerr_new[])
-    pvalue <- step(fit.new-fit)
+    pvalue  <- step(fit.new-fit)
 
   }"
 
@@ -175,18 +170,19 @@ ggs(mc3.out) %>%
    geom_abline(aes(intercept=0, slope=1), color="red")
 
 ggs(mc3.out) %>%
-  filter(Parameter %in% c("b1")) %>%
+  filter(Parameter %in% c("r","b","b1")) %>%
   ggplot(aes(x=value))+
-  geom_histogram()
+  geom_histogram()+
+  facet_wrap(~Parameter, scales = "free")
 
 outstats <- summary(mc3.out)$stat
 outquant <- summary(mc3.out)$quantile
 outstats[which(rownames(outstats)=="pvalue"),"Mean"]
 
 ##  Split MCMC output for file constraints
-# saveRDS(mc3.out[[1]],"../results/swe_est_posteriors_chain1.RDS")
-# saveRDS(mc3.out[[2]],"../results/swe_est_posteriors_chain2.RDS")
-# saveRDS(mc3.out[[3]],"../results/swe_est_posteriors_chain3.RDS")
+saveRDS(mc3.out[[1]],"../results/swe_est_posteriors_chain1.RDS")
+saveRDS(mc3.out[[2]],"../results/swe_est_posteriors_chain2.RDS")
+saveRDS(mc3.out[[3]],"../results/swe_est_posteriors_chain3.RDS")
 # 
 # 
 # 
@@ -216,3 +212,41 @@ outstats[which(rownames(outstats)=="pvalue"),"Mean"]
 # saveRDS(mc3.out[[2]],"../results/swe_avg_posteriors_chain2.RDS")
 # saveRDS(mc3.out[[3]],"../results/swe_avg_posteriors_chain3.RDS")
 # 
+
+
+
+#### HIERARCICAL POISSON
+x_model <- "  
+  model{
+
+#### Variance Priors
+#tau_proc ~ dgamma(0.0001, 0.0001)
+#sigma_proc <- 1/sqrt(tau_proc)
+shape_p ~ dunif(0, 100)
+
+#### Fixed Effects Priors
+b0 ~ dnorm(0, 0.001)
+b1 ~ dnorm(0, 0.001)
+b2 ~ dnorm(0, 0.001)
+
+#### Initial Conditions
+N0      ~ dunif(0,10)
+Nmed[1] <- b0 + b1*N0 + b2*x[1]
+N[1]    ~ dgamma(shape_p, shape_p / exp(Nmed[1])) 
+
+#### Process Model
+for(t in 2:n){
+Nmed[t] <- b0 + b1*N[t-1] + b2*x[t]
+N[t]    ~ dgamma(shape_p, shape_p / exp(Nmed[t])) 
+}
+
+#### Data Model
+for(t in 1:n){
+var_obs[t] <- sd_obs[t]*sd_obs[t]
+shape[t]   <- N[t]*N[t]/var_obs[t]
+rate[t]    <- N[t]/var_obs[t]
+lambda[t]  ~ dgamma(shape[t], rate[t])
+Nobs[t]    ~ dpois(lambda[t])
+}
+
+}"
