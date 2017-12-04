@@ -17,7 +17,7 @@ setwd(paste0(root,"code/"))
 
 
 ####
-####  LOAD LIBRARIES ----
+####  LOAD LIBRARIES -----------------------------------------------------------
 ####
 library(tidyverse) # Data science functions
 library(dplyr)     # Data wrangling
@@ -53,8 +53,8 @@ my_model <- "
 
     #### Variance Priors
     sigma_proc ~ dgamma(0.01,0.01)
-    tau_proc <- 1/sigma_proc^2
-    eta ~ dunif(0, 50)
+    tau_proc   <- 1/sigma_proc^2
+    eta        ~ dunif(0, 50)
     
     #### Fixed Effects Priors
     r  ~ dnorm(0.1, 1/0.02^2) # intrinsic growth rate, informed prior
@@ -62,21 +62,21 @@ my_model <- "
     b1 ~ dnorm(0,0.0001)      # effect of snow
     
     #### Initial Conditions
-    z[1] ~ dnorm(Nobs[1], tau_obs[1]) # varies around observed abundance at t = 1
+    z[1]    ~ dnorm(Nobs[1], tau_obs[1]) # varies around observed abundance at t = 1
     zlog[1] <- log(z[1]) # set first zlog
     
     #### Process Model
     for(t in 2:npreds){
       # Gompertz growth, on log scale
-      mu[t] <- zlog[t-1] + r + b*zlog[t-1] + b1*x[t]
+      mu[t]   <- zlog[t-1] + r + b*zlog[t-1] + b1*x[t]
       zlog[t] ~ dnorm(mu[t], tau_proc)
-      z[t] <- exp(zlog[t]) # back transform to arithmetic scale
+      z[t]    <- exp(zlog[t]) # back transform to arithmetic scale
     }
     
     #### Data Model
     for(j in 2:n){
-      p[j] <- eta/(eta + z[j]) # calculate NB centrality parameter
-      Nobs [j] ~ dnegbin(p[j], eta) # NB likelihood
+      p[j]     <- eta/(eta + z[j]) # calculate NB centrality parameter
+      Nobs[j]  ~ dnegbin(p[j], eta) # NB likelihood
     }
     
     ####  Derived Quantities for Model Evaluation
@@ -85,11 +85,9 @@ my_model <- "
       epsilon.obs[i] <- Nobs[i] - z[i]
 
       # Simulate new data
-      # Nnew[i] ~ dnorm(z.exp[i], tau_obs[i])
-      # Nnew[i] ~ dpois(z.exp[i])
-      p2[i] <- eta/(eta + z[i])
-      Nnew [i] ~ dnegbin(p2[i], eta)
-      sqerr[i] <- (Nobs[i] - z[i])^2
+      p2[i]        <- eta/(eta + z[i])
+      Nnew [i]     ~ dnegbin(p2[i], eta)
+      sqerr[i]     <- (Nobs[i] - z[i])^2
       sqerr_new[i] <- (Nnew[i] - z[i])^2
     }
     fit     <- sum(sqerr[])
@@ -104,7 +102,7 @@ my_model <- "
 ####  Fit Bison Forecasting Model ----------------------------------------------
 ####
 ##  For years without observation error, set to max observed standard deviation
-##  TODO: Impute in the model?
+##  TODO: Impute sigma_obs in the model?
 na_sds                       <- which(is.na(bison_dat$count.sd)==T)
 bison_dat[na_sds,"count.sd"] <- max(bison_dat$count.sd, na.rm=T)
 
@@ -162,91 +160,58 @@ mc3.out <- coda.samples(model=mc3,
                         variable.names=out_variables, 
                         n.iter=10000) 
 
-ggs(mc3.out) %>%
-  filter(Parameter %in% c("fit", "fit.new")) %>%
-  spread(Parameter, value) %>%
-  ggplot(aes(x=fit, y=fit.new))+
-   geom_point()+
-   geom_abline(aes(intercept=0, slope=1), color="red")
-
-ggs(mc3.out) %>%
-  filter(Parameter %in% c("r","b","b1")) %>%
-  ggplot(aes(x=value))+
-  geom_histogram()+
-  facet_wrap(~Parameter, scales = "free")
-
-outstats <- summary(mc3.out)$stat
-outquant <- summary(mc3.out)$quantile
-outstats[which(rownames(outstats)=="pvalue"),"Mean"]
+# ggs(mc3.out) %>%
+#   filter(Parameter %in% c("fit", "fit.new")) %>%
+#   spread(Parameter, value) %>%
+#   ggplot(aes(x=fit, y=fit.new))+
+#    geom_point()+
+#    geom_abline(aes(intercept=0, slope=1), color="red")
+# 
+# ggs(mc3.out) %>%
+#   filter(Parameter %in% c("r","b","b1")) %>%
+#   ggplot(aes(x=value))+
+#   geom_histogram()+
+#   facet_wrap(~Parameter, scales = "free")
+# 
+# outstats <- summary(mc3.out)$stat
+# outquant <- summary(mc3.out)$quantile
+# outstats[which(rownames(outstats)=="pvalue"),"Mean"]
 
 ##  Split MCMC output for file constraints
 saveRDS(mc3.out[[1]],"../results/swe_est_posteriors_chain1.RDS")
 saveRDS(mc3.out[[2]],"../results/swe_est_posteriors_chain2.RDS")
 saveRDS(mc3.out[[3]],"../results/swe_est_posteriors_chain3.RDS")
-# 
-# 
-# 
-# ####
-# ####  FIT AND FORECAST ASSUMING AVG SWE
-# ####
-# scl_fut_swe[] <- 0 # average is 0 by definition
-# ##  Prepare data list
-# mydat <- list(Nobs    = training_dat$count.mean, # mean counts
-#               n       = nrow(training_dat), # number of observations
-#               tau_obs = 1/training_dat$count.sd^2, # transform s.d. to precision
-#               x       = c(as.numeric(scale(training_dat$mean_snow_water_equiv_mm)),scl_fut_swe), # snow depth, plus forecast years
-#               npreds  = nrow(training_dat)+nrow(validation_dat)) # number of total predictions (obs + forecast)
-# 
-# ##  Random variables to collect
-# out_variables <- c("r", "b", "b1", "sigma_proc", "z")
-# 
-# ##  Send to JAGS
-# mc3     <- jags.model(file=textConnection(my_model), data=mydat, n.chains=3, n.adapt = 50000) 
-# update(mc3, n.iter = 100000) 
-# mc3.out <- coda.samples(model=mc3, 
-#                         variable.names=out_variables, 
-#                         n.iter=100000) 
-# 
-# ##  Split MCMC output for file constraints
-# saveRDS(mc3.out[[1]],"../results/swe_avg_posteriors_chain1.RDS")
-# saveRDS(mc3.out[[2]],"../results/swe_avg_posteriors_chain2.RDS")
-# saveRDS(mc3.out[[3]],"../results/swe_avg_posteriors_chain3.RDS")
-# 
 
 
 
-#### HIERARCICAL POISSON
-x_model <- "  
-  model{
+####
+####  FIT AND FORECAST ASSUMING AVG SWE
+####
+scl_fut_swe[] <- 0 # average is 0 by definition
+##  Prepare data list
+mydat <- list(Nobs    = round(training_dat$count.mean), # mean counts
+              n       = nrow(training_dat), # number of observations
+              tau_obs = 1/training_dat$count.sd^2, # transform s.d. to precision
+              x       = c(as.numeric(scale(training_dat$accum_snow_water_equiv_mm)),scl_fut_swe), # snow depth, plus forecast years
+              npreds  = nrow(training_dat)+nrow(validation_dat)) # number of total predictions (obs + forecast)
 
-#### Variance Priors
-#tau_proc ~ dgamma(0.0001, 0.0001)
-#sigma_proc <- 1/sqrt(tau_proc)
-shape_p ~ dunif(0, 100)
+##  Random variables to collect
+out_variables <- c("r", "b", "b1", "eta", "sigma_proc", "z", "pvalue", "fit", "fit.new")
 
-#### Fixed Effects Priors
-b0 ~ dnorm(0, 0.001)
-b1 ~ dnorm(0, 0.001)
-b2 ~ dnorm(0, 0.001)
+##  Send to JAGS
+mc3     <- jags.model(file = textConnection(my_model), 
+                      data = mydat, 
+                      n.chains = 3, 
+                      n.adapt = 5000)
+update(mc3, n.iter = 10000)
+mc3.out <- coda.samples(model = mc3,
+                        variable.names = out_variables,
+                        n.iter = 10000)
 
-#### Initial Conditions
-N0      ~ dunif(0,10)
-Nmed[1] <- b0 + b1*N0 + b2*x[1]
-N[1]    ~ dgamma(shape_p, shape_p / exp(Nmed[1])) 
+##  Split MCMC output for file constraints
+saveRDS(mc3.out[[1]],"../results/swe_avg_posteriors_chain1.RDS")
+saveRDS(mc3.out[[2]],"../results/swe_avg_posteriors_chain2.RDS")
+saveRDS(mc3.out[[3]],"../results/swe_avg_posteriors_chain3.RDS")
 
-#### Process Model
-for(t in 2:n){
-Nmed[t] <- b0 + b1*N[t-1] + b2*x[t]
-N[t]    ~ dgamma(shape_p, shape_p / exp(Nmed[t])) 
-}
 
-#### Data Model
-for(t in 1:n){
-var_obs[t] <- sd_obs[t]*sd_obs[t]
-shape[t]   <- N[t]*N[t]/var_obs[t]
-rate[t]    <- N[t]/var_obs[t]
-lambda[t]  ~ dgamma(shape[t], rate[t])
-Nobs[t]    ~ dpois(lambda[t])
-}
 
-}"
