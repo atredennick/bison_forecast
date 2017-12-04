@@ -167,8 +167,10 @@ for(t in 1:forecast_steps){
 varIP <- apply(forecasts,2,var)
 
 
-##  Initial conditions, parameter, and process uncertainty
-x              <- scl_fut_swe
+##  Initial conditions, parameter, and driver uncertainty
+xfun           <- function(x){rnorm(num_iters,x,sigma_x)}
+sigma_x        <- 0.1
+x              <- lapply(scl_fut_swe, FUN = xfun)
 z              <- sample(predictions[,nrow(bison_dat)], num_iters, replace = TRUE)
 params         <- as.matrix(fitted_model$params)
 sample_params  <- sample.int(nrow(params), size = num_iters, replace = TRUE)
@@ -179,16 +181,18 @@ sd_proc        <- params[sample_params,"sigma_proc"]
 forecasts      <- matrix(data = NA, nrow = num_iters, ncol = forecast_steps)
 
 for(t in 1:forecast_steps){
-  z <- iterate_process(Nnow = z, xnow = x[t], r = r, b = b, b1 = b1, sd_proc = sd_proc)
+  z <- iterate_process(Nnow = z, xnow = x[[t]], r = r, b = b, b1 = b1, sd_proc = 0)
   forecasts[,t] <- z
 }
-varIPE <- apply(forecasts,2,var)
+varIPD <- apply(forecasts,2,var)
 
 
-##  Initial conditions, parameter, process, and covariate uncertainty
-xfun           <- function(x){rnorm(num_iters,x,sigma_x)}
-sigma_x        <- 0
-x              <- lapply(scl_fut_swe, FUN = xfun)
+##  Initial conditions, parameter, driver, and process uncertainty
+sigma_x        <- c(0.1,0.2,0.4,0.8,1.6,2.4,4.8)
+x              <- matrix(data = NA, ncol = length(scl_fut_swe), nrow = num_iters)
+for(i in 1:ncol(x)){
+  x[,i] <- rnorm(num_iters, scl_fut_swe[i], sigma_x[i])
+}
 z              <- sample(predictions[,nrow(bison_dat)], num_iters, replace = TRUE)
 params         <- as.matrix(fitted_model$params)
 sample_params  <- sample.int(nrow(params), size = num_iters, replace = TRUE)
@@ -202,10 +206,11 @@ for(t in 1:forecast_steps){
   z <- iterate_process(Nnow = z, xnow = x[[t]], r = r, b = b, b1 = b1, sd_proc = sd_proc)
   forecasts[,t] <- z
 }
-varIPEX <- apply(forecasts,2,var)
+varIPDE <- apply(forecasts,2,var)
 
 
-V.pred.sim.rel <- apply(rbind(varIPEX,varIPE,varIP,varI),2,function(x) {x/max(x)})
+V.pred.sim     <- rbind(varIPDE,varIPD,varIP,varI)
+V.pred.sim.rel <- apply(V.pred.sim,2,function(x) {x/max(x)})
 
 
 
@@ -218,12 +223,12 @@ my_cols <- c("#0A4D5B", "#139AB8", "#39B181","grey")
 variance_plot <- ggplot(data=var_rel_preds, aes(x=x))+
   geom_ribbon(aes(ymin=0, ymax=varI), fill=my_cols[1])+
   geom_ribbon(aes(ymin=varI, ymax=varIP), fill=my_cols[2])+
-  geom_ribbon(aes(ymin=varIP, ymax=varIPE), fill=my_cols[3])+
-  geom_ribbon(aes(ymin=varIPE, ymax=varIPEX), fill=my_cols[4])+
+  geom_ribbon(aes(ymin=varIP, ymax=varIPD), fill=my_cols[3])+
+  geom_ribbon(aes(ymin=varIPD, ymax=varIPDE), fill=my_cols[4])+
   ylab("Percent of uncertainty")+
   xlab("Forecast steps")+
-  scale_x_continuous(breaks=seq(2,forecast_steps,by=2), 
-                     labels=paste(seq(2,forecast_steps,by=2), "yrs"))+
+  scale_x_continuous(breaks=seq(1,forecast_steps,by=1), 
+                     labels=paste(seq(1,forecast_steps,by=1), "yrs"))+
   scale_y_continuous(labels=paste0(seq(0,100,25),"%"))+
   my_theme
 
