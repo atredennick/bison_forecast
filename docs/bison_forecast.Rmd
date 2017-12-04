@@ -105,7 +105,7 @@ The fully specified model, including a model of the ecological process, a model 
 \vspace{-2em}
 
 \begin{align}
-\left[ \boldsymbol{\theta}_\text{p}, z_{(t)}, z_{(t-1)} | y_{(t)}, x_{(t)}, \sigma^2_{\text{o,(t)}} \right ] &\propto \prod_{t=2}^{58} \underbrace{\left[ z_{(t)} | \boldsymbol{\theta}_\text{p}, z_{(t-1)}, x_{(t)} \right]}_{\text{process}} \prod_{t=1}^{48} \underbrace{\left[ y_{(t)} | \sigma^2_{\text{o,(t)}}, z_{(t)} \right]}_{\text{data}} \underbrace{\left[ \boldsymbol{\theta}_\text{p}, z_{(t=1)}\right]}_{\text{parameters}},
+\left[ \boldsymbol{\theta}_\text{p}, \kappa, z_{(t)}, z_{(t-1)} | y_{(t)}, x_{(t)} \right ] &\propto \prod_{t=2}^{58} \underbrace{\left[ z_{(t)} | \boldsymbol{\theta}_\text{p}, z_{(t-1)}, x_{(t)} \right]}_{\text{process}} \prod_{t=1}^{48} \underbrace{\left[ y_{(t)} | \kappa, z_{(t)} \right]}_{\text{data}} \underbrace{\left[ \boldsymbol{\theta}_\text{p}, \kappa, z_{(t=1)}\right]}_{\text{parameters}},
 \end{align}
 
 where the notation $[a|b,c]$ reads as the probability or probability density of *a* conditional on *b* and *c* (Hobbs and Hooten 2015).
@@ -125,7 +125,7 @@ where the determinstic model $\text{log}(z_{(t-1)}) + r + b_0 \text{log}(z_{(t-1
 The quantity $\sigma^2_\text{p}$ is the process variance on the log scale, which accounts for all the drivers of the true state that are not found in the determinstic model.
 
 We used a negative binomial likelihood to link the observations ($\textbf{y}$) to the estimated latent states ($\textbf{z}$).
-The likelihood is $y_{(t)} \sim \text{NB} \left( \frac{\eta}{\eta + z_{(t)}} , \eta \right)$.
+The likelihood is $y_{(t)} \sim \text{NB} \left(  z_{(t)} , \kappa \right)$.
 As mentioned earlier, replicate observations were not available for seven of the 48 years.
 In those seven years we could not estimate observation error.
 Therefore, in any year for which observation error could not be estimated, we set observation variance to the maximum value observed across the time series.
