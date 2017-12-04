@@ -33,7 +33,7 @@ library(ecoforecastR) # MCMC manipulation (by M. Dietze; modified by A. Tredenni
 ####
 ####  LOAD DATA ----------------------------------------------------------------
 ####
-snow_ynp  <- read.csv("../data/west_yellowstone_snotel_summary.csv", row.names = 1) 
+snow_ynp  <- read.csv("../data/west_yellowstone_snotel_summary.csv", row.names = 1)
 bison_raw <- read.csv("../data/YNP_bison_population_size.csv")
 bison_dat <- bison_raw %>% 
   dplyr::select(-source) %>%     # drop the source column

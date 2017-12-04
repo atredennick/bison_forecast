@@ -32,9 +32,10 @@ library(wux)
 ####  FETCH THE WEST YELLOWSTONE SNOTEL DATA (SITE #924) ----
 ####
 setwd("../data/")
+
+### WEST YELLOWSTONE SNOTEL
 snotel.info(path = ".") 
-# download.snotel(site = 924) # West Yellowstone SNOTEL
-download.snotel(site = 384) # Canyon SNOTEL
+download.snotel(site = 924) 
 file.remove("snotel_metadata.csv")
 
 ynp_snotel <- read.csv("snotel_924.csv", skip = 58) %>%
