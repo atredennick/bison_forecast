@@ -64,6 +64,7 @@ post_params <- as.data.frame(as.matrix(fitted_model$params))
 max_iters   <- nrow(post_params)
 post_params <- post_params %>%
   mutate(iteration = 1:max_iters) %>%
+  dplyr::select(iteration,b,b1,r,sigma_proc) %>%
   gather(key = parameter, value = estimate, -iteration) %>%
   mutate(prior = c(rnorm(max_iters,0,1000), # b prior
                    rnorm(max_iters,0,1000), # b1 prior
@@ -86,7 +87,7 @@ ggplot(post_params, aes(x = estimate, y = ..density..))+
   facet_wrap(~parameter, scales = "free", ncol = 4)+
   ylab("Posterior density")+
   xlab("Parameter estimate")+
-  my_theme_angle
+  my_theme
 ggsave(filename = "../figures/bison_post_params.png", 
        height = 3, 
        width = 10, 

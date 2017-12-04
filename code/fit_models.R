@@ -161,6 +161,11 @@ mc3.out <- coda.samples(model=mc3,
                         n.iter=10000) 
 
 # ggs(mc3.out) %>%
+#   filter(Parameter %in% c("r")) %>%
+#   ggplot(aes(x=Iteration,y = value, color = as.factor(Chain)))+
+#   geom_line()
+# 
+# ggs(mc3.out) %>%
 #   filter(Parameter %in% c("fit", "fit.new")) %>%
 #   spread(Parameter, value) %>%
 #   ggplot(aes(x=fit, y=fit.new))+

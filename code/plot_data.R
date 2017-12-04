@@ -10,8 +10,9 @@
 ##  Clear everything
 rm(list = ls(all.names = TRUE))
 
-##  Set working directory to source file location...only for RStudio
-setwd(dirname(rstudioapi::getActiveDocumentContext()$path))
+##  Set working directory to source file location
+root <- "~/Repos/bison_forecast/"
+setwd(paste0(root,"code/"))
 
 
 
