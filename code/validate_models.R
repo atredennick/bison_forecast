@@ -1,12 +1,9 @@
 ################################################################################
-##  partition_forecast.R: R script to plot observations and posterior
-##  predictions from the bison population model and then partition the forecast
-##  variance following Dietze 2017, Ecological Applications
-##  http://onlinelibrary.wiley.com/doi/10.1002/eap.1589/full
+##  validate_models.R: R script to compare forecasts to observations.
 ##
 ##  ____________________________________________________________________________
 ##  Author:       Andrew Tredennick (atredenn@gmail.com)
-##  Date created: December, 4 2017
+##  Date created: December 4, 2017
 ################################################################################
 
 ##  Clear everything...
@@ -56,7 +53,7 @@ swe_avg_posts <- as.mcmc.list(list(readRDS("../results/swe_avg_posteriors_chain1
 
 
 ####
-####  REFORMAT KNOWN SWE MCMC RESULTS ------------------------------------------
+####  REFORMAT MCMC RESULTS ----------------------------------------------------
 ####
 ## Split output
 out          <- list(params=NULL, predict=NULL)
@@ -68,181 +65,86 @@ out$params   <- mat2mcmc.list(mfit[,-pred.cols])
 fitted_model <- out
 
 ## Collate predictions
-predictions        <- rbind(fitted_model$predict[[1]],
-                            fitted_model$predict[[2]],
-                            fitted_model$predict[[3]])
-median_predictions <- apply(predictions, MARGIN = 2, FUN = "median")
-upper_predictions  <- apply(predictions, MARGIN = 2, FUN = function(x){quantile(x, probs = 0.975)})
-lower_predictions  <- apply(predictions, MARGIN = 2, FUN = function(x){quantile(x, probs = 0.025)})
-prediction_df      <- data.frame(year = bison_dat$year,
-                                 set = bison_dat$set,
-                                 observation = bison_dat$count.mean,
-                                 upper_observation = bison_dat$count.mean+bison_dat$count.sd,
-                                 lower_observation = bison_dat$count.mean-bison_dat$count.sd,
-                                 median_prediction = median_predictions,
-                                 upper_prediction = upper_predictions,
-                                 lower_prediction = lower_predictions)
+est_swe_preds <- rbind(fitted_model$predict[[1]],
+                       fitted_model$predict[[2]],
+                       fitted_model$predict[[3]])
+
+## Split output
+out          <- list(params=NULL, predict=NULL)
+mfit         <- as.matrix(swe_avg_posts,chains=TRUE)
+pred.cols    <- union(grep("z[",colnames(mfit),fixed=TRUE),grep("mu[",colnames(mfit),fixed=TRUE))
+chain.col    <- which(colnames(mfit)=="CHAIN")
+out$predict  <- mat2mcmc.list(mfit[,c(chain.col,pred.cols)])
+out$params   <- mat2mcmc.list(mfit[,-pred.cols])
+fitted_model <- out
+
+## Collate predictions
+avg_swe_preds <- rbind(fitted_model$predict[[1]],
+                       fitted_model$predict[[2]],
+                       fitted_model$predict[[3]])
 
 
 
 ####
-####  PLOT DATA AND POSTERIOR PREDICTIONS --------------------------------------
+####  COMPARE PREDICTIONS TO OBSERVATIONS --------------------------------------
 ####
-pred_color <- "#CF4C26"
-obs_color  <- "#278DAF"
-calibration_plot <- ggplot(prediction_df, aes(x=year))+
-  geom_ribbon(aes(ymax=upper_prediction, ymin=lower_prediction),
-              fill=pred_color, 
-              color=NA, 
-              alpha=0.2)+
-  geom_line(aes(y=median_prediction), color=pred_color)+
-  geom_errorbar(aes(ymin=lower_observation, ymax=upper_observation), 
-                width=0.5, 
-                color=obs_color, 
-                size=0.2)+
-  geom_point(aes(y=observation), color=obs_color, size=0.5)+
-  geom_vline(aes(xintercept=2010), linetype=2,color="grey55")+
-  ylab("Number of bison")+
-  xlab("Year")+
-  my_theme
+avg_swe_df <- as.data.frame(avg_swe_preds) 
+colnames(avg_swe_df) <- bison_dat$year
+avg_swe_df <- avg_swe_df %>%
+  mutate(iteration = 1:nrow(avg_swe_df)) %>%
+  gather(key = year, value = estimate, -iteration) %>%
+  mutate(year = as.numeric(year)) %>%
+  inner_join(filter(bison_dat, set == "validation"), by = "year") %>%
+  dplyr::select(iteration, year, estimate, count.mean) %>%
+  mutate(sq_error = (estimate - count.mean)^2,
+         model = "avg_swe") %>%
+  group_by(model, year) %>%
+  summarise(rmse = sqrt(mean(sq_error)))
 
+est_swe_df <- as.data.frame(est_swe_preds) 
+colnames(est_swe_df) <- bison_dat$year
+est_swe_df <- est_swe_df %>%
+  mutate(iteration = 1:nrow(est_swe_df)) %>%
+  gather(key = year, value = estimate, -iteration) %>%
+  mutate(year = as.numeric(year)) %>%
+  inner_join(filter(bison_dat, set == "validation"), by = "year") %>%
+  dplyr::select(iteration, year, estimate, count.mean) %>%
+  mutate(sq_error = (estimate - count.mean)^2,
+         model = "est_swe") %>%
+  group_by(model, year) %>%
+  summarise(rmse = sqrt(mean(sq_error)))
 
-
-####
-####  PARTITION FORECAST UNCERTAINTY -------------------------------------------
-####
-##  Function for the ecological process (Gompertz population growth)
-iterate_process <- function(Nnow, xnow, r, b, b1, sd_proc) { 
-  mu <- log(Nnow) + r + b*log(Nnow) + b1*xnow # determinstic process; log scale
-  zlog <- rnorm(length(mu), mu, sd_proc) # stochastic process; log scale
-  N <- exp(zlog) # back transform to arithmetic scale
-}
-
-##  Set up SWE knowns (2011-2017), relative to scaling of observations
-training_dat <- filter(bison_dat, set == "training")
-validation_dat <- filter(bison_dat, set == "validation")
-swe_mean     <- mean(training_dat$accum_snow_water_equiv_mm)
-swe_sd       <- sd(training_dat$accum_snow_water_equiv_mm)
-forecast_swe <- snow_ynp %>%
-  filter(year %in% validation_dat$year) %>%
-  pull(accum_snow_water_equiv_mm)
-scl_fut_swe  <- (forecast_swe - swe_mean) / swe_sd
-
-
-##  Initial condition uncertainty: make forecasts from all MCMC iterations of
-##  the final year, but use mean parameter values and no process error.
-forecast_steps <- nrow(validation_dat)
-num_iters      <- 1000
-x              <- scl_fut_swe
-z              <- sample(predictions[,nrow(training_dat)], num_iters, replace = TRUE)
-param_summary  <- summary(fitted_model$params)$quantile
-b              <- param_summary[1,3]
-b1             <- param_summary[2,3]
-r              <- param_summary[7,3]
-sd_proc        <- param_summary[8,3]
-forecasts      <- matrix(data = NA, nrow = num_iters, ncol = forecast_steps)
-
-for(t in 1:forecast_steps){
-  z <- iterate_process(Nnow = z, xnow = x[t], r = r, b = b, b1 = b1, sd_proc = 0)
-  forecasts[,t] <- z
-}
-varI <- apply(forecasts,2,var)
-
-
-##  Initial conditions and parameter uncertainty
-x              <- scl_fut_swe
-z              <- sample(predictions[,nrow(training_dat)], num_iters, replace = TRUE)
-params         <- as.matrix(fitted_model$params)
-sample_params  <- sample.int(nrow(params), size = num_iters, replace = TRUE)
-b              <- params[sample_params,"b"]
-b1             <- params[sample_params,"b1"]
-r              <- params[sample_params,"r"]
-sd_proc        <- param_summary[3,3]
-forecasts      <- matrix(data = NA, nrow = num_iters, ncol = forecast_steps)
-
-for(t in 1:forecast_steps){
-  z <- iterate_process(Nnow = z, xnow = x[t], r = r, b = b, b1 = b1, sd_proc = 0)
-  forecasts[,t] <- z
-}
-varIP <- apply(forecasts,2,var)
-
-
-##  Initial conditions, parameter, and driver uncertainty
-xfun           <- function(x){rnorm(num_iters,x,sigma_x)}
-sigma_x        <- 0.1
-x              <- lapply(scl_fut_swe, FUN = xfun)
-z              <- sample(predictions[,nrow(bison_dat)], num_iters, replace = TRUE)
-params         <- as.matrix(fitted_model$params)
-sample_params  <- sample.int(nrow(params), size = num_iters, replace = TRUE)
-b              <- params[sample_params,"b"]
-b1             <- params[sample_params,"b1"]
-r              <- params[sample_params,"r"]
-sd_proc        <- params[sample_params,"sigma_proc"]
-forecasts      <- matrix(data = NA, nrow = num_iters, ncol = forecast_steps)
-
-for(t in 1:forecast_steps){
-  z <- iterate_process(Nnow = z, xnow = x[[t]], r = r, b = b, b1 = b1, sd_proc = 0)
-  forecasts[,t] <- z
-}
-varIPD <- apply(forecasts,2,var)
-
-
-##  Initial conditions, parameter, driver, and process uncertainty
-sigma_x        <- c(0.1,0.2,0.4,0.8,1.6,2.4,4.8)
-x              <- matrix(data = NA, ncol = length(scl_fut_swe), nrow = num_iters)
-for(i in 1:ncol(x)){
-  x[,i] <- rnorm(num_iters, scl_fut_swe[i], sigma_x[i])
-}
-z              <- sample(predictions[,nrow(bison_dat)], num_iters, replace = TRUE)
-params         <- as.matrix(fitted_model$params)
-sample_params  <- sample.int(nrow(params), size = num_iters, replace = TRUE)
-b              <- params[sample_params,"b"]
-b1             <- params[sample_params,"b1"]
-r              <- params[sample_params,"r"]
-sd_proc        <- params[sample_params,"sigma_proc"]
-forecasts      <- matrix(data = NA, nrow = num_iters, ncol = forecast_steps)
-
-for(t in 1:forecast_steps){
-  z <- iterate_process(Nnow = z, xnow = x[[t]], r = r, b = b, b1 = b1, sd_proc = sd_proc)
-  forecasts[,t] <- z
-}
-varIPDE <- apply(forecasts,2,var)
-
-
-V.pred.sim     <- rbind(varIPDE,varIPD,varIP,varI)
-V.pred.sim.rel <- apply(V.pred.sim,2,function(x) {x/max(x)})
+rmse_df <- rbind(est_swe_df, avg_swe_df)
 
 
 
 ####
-####  PLOT THE FORECASTING UNCERTAINTY PARTITION -------------------------------
+####  MAKE THE RMSE PLOT AND SAVE ----------------------------------------------
 ####
-var_rel_preds <- as.data.frame(t(V.pred.sim.rel*100))
-var_rel_preds$x <- 1:nrow(var_rel_preds)
-my_cols <- c("#0A4D5B", "#139AB8", "#39B181","grey")
-variance_plot <- ggplot(data=var_rel_preds, aes(x=x))+
-  geom_ribbon(aes(ymin=0, ymax=varI), fill=my_cols[1])+
-  geom_ribbon(aes(ymin=varI, ymax=varIP), fill=my_cols[2])+
-  geom_ribbon(aes(ymin=varIP, ymax=varIPD), fill=my_cols[3])+
-  geom_ribbon(aes(ymin=varIPD, ymax=varIPDE), fill=my_cols[4])+
-  ylab("Percent of uncertainty")+
-  xlab("Forecast steps")+
-  scale_x_continuous(breaks=seq(1,forecast_steps,by=1), 
-                     labels=paste(seq(1,forecast_steps,by=1), "yrs"))+
-  scale_y_continuous(labels=paste0(seq(0,100,25),"%"))+
-  my_theme
-
-
-
-####
-####  COMBINE PLOTS AND SAVE ---------------------------------------------------
-####
-suppressWarnings( # ignore warning about missing values, we know they are missing
-  plot_grid(calibration_plot, variance_plot, nrow = 2, labels = "AUTO")
-)
-ggsave(filename = "../figures/bison_combined.png", 
-       width = 4, 
-       height = 6, 
-       units = "in", 
-       dpi =120)
-
+mycol <- c("#278DAF", "#CF4C26")
+ggplot(rmse_df, aes(x = year, y = rmse, color = model))+
+  geom_line()+
+  geom_point(size = 3, color = "#EFEFEF")+
+  geom_point(size = 2)+
+  scale_x_continuous(breaks = rmse_df$year)+
+  scale_color_manual(values = mycol, name = NULL, labels = c("Mean SWE","Known SWE"))+
+  xlab("Forecast Year")+
+  ylab("RMSE (number of bison)")+
+  theme_bw()+
+  theme(panel.grid.major.x = element_blank(), 
+        panel.grid.minor.x = element_blank(),
+        panel.grid.minor.y = element_blank(),
+        panel.grid.major.y = element_line(color="white"),
+        panel.background   = element_rect(fill = "#EFEFEF"),
+        axis.text          = element_text(size=10, color="grey35", family = "Arial Narrow"),
+        axis.title         = element_text(size=12, family = "Arial Narrow", face = "bold"),
+        panel.border       = element_blank(),
+        axis.line.x        = element_line(color="black"),
+        axis.line.y        = element_line(color="black"),
+        strip.background   = element_blank(),
+        strip.text         = element_text(size=10, color="grey15", family = "Arial Narrow"),
+        legend.position    = c(0.2,0.8),
+        legend.key         = element_rect(fill = NA),
+        legend.background  = element_rect(fill = NA),
+        legend.text        = element_text(size=10, color="grey15", family = "Arial Narrow"))
+ggsave(filename = "../figures/rmse_by_mod.png", width = 4, height = 4, units = "in", dpi = 120)
