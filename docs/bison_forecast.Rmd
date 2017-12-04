@@ -3,7 +3,6 @@ fontsize: 11pt
 geometry: margin=1in
 header-includes:
   - \usepackage{lineno}
-  - \linenumbers
   - \usepackage{setspace}
   - \usepackage{todonotes}
   - \doublespacing
@@ -57,6 +56,8 @@ urlcolor: black
 \renewcommand*{\thefootnote}{\arabic{footnote}}
 \setcounter{footnote}{0}
 
+\linenumbers{}
+
 \newpage{}
 
 \begin{abstract}
@@ -93,9 +94,9 @@ Counts typically occurred four times a year.
 We used summer counts only because the summer aggregation of bison tends to produce more accurate counts (Hobbs et al. 2015).
 Replicate counts were taken in 41 of the 48 years, and from these replicates we estimated the mean annual total population in the park and the annual standard deviation of counts (i.e., observation error).
 
-We used mean annual snow water equivalent (SWE, mm) as an environmental covariate in our population model.
+We used annual accumulated snow water equivalent (SWE, mm) as an environmental covariate in our population model.
 SWE data came from the West Yellowstone SNOTEL station (Site #924).
-We downloaded the SNOTEL data using the ```snotelr``` package in R and then calculated the mean SWE for each year.
+We downloaded the SNOTEL data using the ```snotelr``` package in R and then summed SWE across days for each year.
 
 ##  State-space model
 We used a Bayesian state-space model to obtain posterior distributions of all unknown parameters, latent states, and forecasts of future states.

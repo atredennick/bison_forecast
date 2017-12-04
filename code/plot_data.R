@@ -43,8 +43,8 @@ bison_dat <- bison_raw %>%
 ####  PLOT BISON AND SNOW DATA -------------------------------------------------
 ####
 plot_data <- bison_dat %>%
-  dplyr::select(year, set, count.mean, count.sd, mean_snow_water_equiv_mm) %>%
-  dplyr::rename(avg_swe = mean_snow_water_equiv_mm)
+  dplyr::select(year, set, count.mean, count.sd, accum_snow_water_equiv_mm) %>%
+  dplyr::rename(avg_swe = accum_snow_water_equiv_mm)
 
 docolor  <- "#278DAF"
 altcolor <- "#CF4C26"
@@ -63,7 +63,7 @@ snow_plot <- ggplot(plot_data, aes(x = year, y = avg_swe, color = set))+
   geom_line(alpha = 0.6)+
   geom_point(size=1.5)+
   scale_color_manual(values = c(docolor, altcolor))+
-  ylab("Mean SWE (mm)")+
+  ylab("Accumulated SWE (mm)")+
   xlab("Year")+
   my_theme+
   guides(color = FALSE)
