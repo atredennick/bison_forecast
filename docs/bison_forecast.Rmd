@@ -60,19 +60,19 @@ urlcolor: black
 \newpage{}
 
 \begin{abstract}
-Making ecological forecasts requires bringing together data and models that can project states under future environmental conditions.
+Making ecological forecasts requires bringing together data with models that can project states under future environmental conditions.
 An interesting, but often overlooked, complication of ecological forecasting is that the state of interest (e.g., population abundance) is often impacted by an environmental covariate (e.g., precipitation) that itself must be forecast.
 In many cases the limits to ecological forecasting lie in the environmental covariates we choose, because even if those covariates produce better understanding of the system, uncertainty in their forecast will propogate through to impact the uncertainty of the focal state.
 Thus, understanding when and by how much forecasts are limited by the uncertainty of environmental covariates is an urgent need.
 Here we use new methods to explicitly quantify the different sources of uncertainty on forecasts of the Yellowstone bison population.
-We fit a Bayesian state-space model to 38 years of population counts assuming Ricker population growth with an environmental effect of mean annual snow water equivalent.
-We made forecasts for an additional 10 years and found (1) that including known values of mean annual snow water equivalent increased out-of-sample forecast accuracy and (2) that xx - xx\% of forecast error was associated with uncertainty in future projections of snow water equivalent.
+We fit a Bayesian state-space model to 38 years of population counts assuming Gompertz population growth with an environmental effect of annual accumulated snow water equivalent.
+We made forecasts for an additional 7 years and found (1) that including known values of mean annual snow water equivalent increased out-of-sample forecast accuracy and (2) that xx - xx\% of forecast error was associated with uncertainty in future projections of snow water equivalent.
 In comparison, only x\% of forecast error was associated with uncertainty in initial conditions (e.g., population state at $t-1$), and fell to 0\% at a forecast horizon of three years.
 We used simulations to show how forecast error decreased with increased precision of snow water equivalent forecasts.
 Our findings highlight the necessity of partitioning forecast error into quantifiable components.
 Only then can key limitations be identified.
 In our case, more precise observations of bison population abundance will not lead to better forecasts.
-To better forecast the impacts of environmental change on the Yellowstone bison population, we need better forecasts of the environmental change itself.
+To better forecast the impacts of environmental change on the Yellowstone bison population using our particular model, we need better forecasts of the environmental change itself.
 
 \vspace{1em}
 
@@ -117,14 +117,14 @@ Our process model represents the population dynamics of the Yellowstone bison us
 \vspace{-2em}
 
 \begin{align}
-z_{(t)} \sim \text{lognormal}\left( \text{log}\left(z_{(t-1)}e^{r + b_0 z_{(t-1)} + b_1 x_{(t)}}\right), \sigma^2_\text{p} \right),
+\text{log}(z_{(t)}) \sim \text{Normal}\left( \text{log}(z_{(t-1)}) + r + b_0 \text{log}(z_{(t-1)}) + b_1 x_{(t)}, \sigma^2_\text{p} \right),
 \end{align}
 
-where the determinstic model $z_{(t-1)}e^{r + b_0 z_{(t-1)} + b_1 x_{(t)}}$ is a Ricker model of population growth (Ricker 19xx) that predicts the mean of $z_{(t)}$ on the log scale as function of the true state of the population at time $t-1$ ($z_{(t-1)}$), the intrinsic, per capita rate of increase (*r*), the strength of density-dependence ($b_0$), and the effect ($b_1$) of mean annual snow water equivalent at time *t* ($x_{(t)}$).
+where the determinstic model $\text{log}(z_{(t-1)}) + r + b_0 \text{log}(z_{(t-1)}) + b_1 x_{(t)}$ is a Gompertz model of population growth (Ricker 19xx) that predicts the mean of $z_{(t)}$ on the log scale as function of the true state of the log population at time $t-1$ ($z_{(t-1)}$), the intrinsic, per capita rate of increase (*r*), the strength of density-dependence ($b_0$), and the effect ($b_1$) of mean annual snow water equivalent at time *t* ($x_{(t)}$).
 The quantity $\sigma^2_\text{p}$ is the process variance on the log scale, which accounts for all the drivers of the true state that are not found in the determinstic model.
 
-We used a normal likelihood to link the observations ($\textbf{y}$) to the estimated latent states ($\textbf{z}$).
-Using the estimates of observation variance for each year *t* ($\sigma^2_{\text{o},(t)}$), the likelihood is $y_{(t)} \sim \text{Normal} \left( z_{(t)} , \sigma^2_{\text{o},(t)} \right)$.
+We used a negative binomial likelihood to link the observations ($\textbf{y}$) to the estimated latent states ($\textbf{z}$).
+The likelihood is $y_{(t)} \sim \text{NB} \left( \frac{\eta}{\eta + z_{(t)}} , \eta \right)$.
 As mentioned earlier, replicate observations were not available for seven of the 48 years.
 In those seven years we could not estimate observation error.
 Therefore, in any year for which observation error could not be estimated, we set observation variance to the maximum value observed across the time series.
