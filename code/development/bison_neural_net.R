@@ -34,7 +34,7 @@ source("./utilities/plotting_theme.R") # Source my plotting theme
 snow_ynp  <- read.csv("../data/west_yellowstone_snotel_summary.csv", row.names = 1) 
 bison_raw <- read.csv("../data/YNP_bison_population_size.csv")
 bison_dat <- bison_raw %>% 
-  dplyr::select(-source) %>%     # drop the source column
+  dplyr::select(-count.source, -removal.source) %>%     # drop the source column
   mutate(set = ifelse(year < 2011, "training", "validation")) %>% # make new column for data splits
   left_join(snow_ynp, by="year") # merge in SNOTEL data
 
@@ -50,14 +50,17 @@ y_ts <- ts(data = y,
            end = max(bison_training$year), 
            frequency = 1)
 
-x <- pull(bison_training, accum_snow_water_equiv_mm)
+X <- cbind(pull(bison_training, accum_snow_water_equiv_mm),
+           pull(bison_training, wint.removal))
+X[is.na(X[,2]==TRUE),2] <- 0
 
 ##  Fit the model to training data
-fit <- nnetar(y_ts, xreg = x, p = 1, P = 0)
+fit <- nnetar(y_ts, xreg = X)
 
 ##  Forecast with known SWE
 bison_testing <- filter(bison_dat, set == "validation")
-xcast <- pull(bison_testing, accum_snow_water_equiv_mm)
-fcast <- forecast(fit, xreg = xcast, PI = TRUE)
+Xcast <- cbind(pull(bison_testing, accum_snow_water_equiv_mm),
+               pull(bison_testing, wint.removal))
+fcast <- forecast(fit, xreg = Xcast, PI = TRUE)
 plot(fcast)
 lines(bison_testing$year, bison_testing$count.mean, col = "red")
