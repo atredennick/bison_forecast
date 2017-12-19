@@ -1,4 +1,4 @@
-This is XeTeX, Version 3.14159265-2.6-0.99991 (TeX Live 2014) (preloaded format=xelatex 2014.5.25)  19 DEC 2017 12:34
+This is XeTeX, Version 3.14159265-2.6-0.99991 (TeX Live 2014) (preloaded format=xelatex 2014.5.25)  19 DEC 2017 13:03
 entering extended mode
  \write18 enabled.
  %&-line parsing enabled.
@@ -2233,9 +2233,43 @@ File: background.png Graphic file (type QTm)
 
 ]
 LaTeX Font Info:    Font shape `EU1/NotoSans(1)/bx/n' will be
-(Font)              scaled to size 8.80496pt on input line 144.
+(Font)              scaled to size 8.80496pt on input line 148.
 File: ../figures/bison_data_plots.png Graphic file (type QTm)
  <use  "../figures/bison_data_plots.png" >
+LaTeX Font Info:    Try loading font information for U+msa on input line 148.
+
+(/usr/local/texlive/2014/texmf-dist/tex/latex/amsfonts/umsa.fd
+File: umsa.fd 2013/01/14 v3.01 AMS symbols A
+)
+LaTeX Font Info:    Try loading font information for U+msb on input line 148.
+
+(/usr/local/texlive/2014/texmf-dist/tex/latex/amsfonts/umsb.fd
+File: umsb.fd 2013/01/14 v3.01 AMS symbols B
+)
+LaTeX Font Info:    Font shape `EU1/NotoSans(0)/m/n' will be
+(Font)              scaled to size 8.80496pt on input line 148.
+LaTeX Font Info:    Font shape `EU1/NotoSans(0)/m/n' will be
+(Font)              scaled to size 6.43286pt on input line 148.
+LaTeX Font Info:    Font shape `EU1/NotoSans(0)/m/n' will be
+(Font)              scaled to size 4.82465pt on input line 148.
+LaTeX Font Info:    Font shape `EU1/NotoSans(0)/m/it' will be
+(Font)              scaled to size 8.80496pt on input line 148.
+LaTeX Font Info:    Font shape `EU1/NotoSans(0)/m/it' will be
+(Font)              scaled to size 6.43286pt on input line 148.
+LaTeX Font Info:    Font shape `EU1/NotoSans(0)/m/it' will be
+(Font)              scaled to size 4.82465pt on input line 148.
+LaTeX Font Info:    Font shape `EU1/NotoSans(1)/m/n' will be
+(Font)              scaled to size 6.43286pt on input line 148.
+LaTeX Font Info:    Font shape `EU1/NotoSans(1)/m/it' will be
+(Font)              scaled to size 8.80496pt on input line 148.
+LaTeX Font Info:    Font shape `EU1/NotoSans(1)/m/it' will be
+(Font)              scaled to size 6.43286pt on input line 148.
+LaTeX Font Info:    Font shape `EU1/NotoSans(1)/m/it' will be
+(Font)              scaled to size 4.82465pt on input line 148.
+
+Overfull \vbox (15.64899pt too high) detected at line 148
+ []
+
 [4
 
 ]
@@ -2243,162 +2277,57 @@ File: background.png Graphic file (type QTm)
  <use  "background.png" > [5
 
 ]
-LaTeX Font Info:    Try loading font information for U+msa on input line 157.
-
-(/usr/local/texlive/2014/texmf-dist/tex/latex/amsfonts/umsa.fd
-File: umsa.fd 2013/01/14 v3.01 AMS symbols A
-)
-LaTeX Font Info:    Try loading font information for U+msb on input line 157.
-
-(/usr/local/texlive/2014/texmf-dist/tex/latex/amsfonts/umsb.fd
-File: umsb.fd 2013/01/14 v3.01 AMS symbols B
-)
-LaTeX Font Info:    Font shape `EU1/NotoSans(0)/m/n' will be
-(Font)              scaled to size 8.80496pt on input line 157.
-LaTeX Font Info:    Font shape `EU1/NotoSans(0)/m/n' will be
-(Font)              scaled to size 6.43286pt on input line 157.
-LaTeX Font Info:    Font shape `EU1/NotoSans(0)/m/n' will be
-(Font)              scaled to size 4.82465pt on input line 157.
-LaTeX Font Info:    Font shape `EU1/NotoSans(0)/m/it' will be
-(Font)              scaled to size 8.80496pt on input line 157.
-LaTeX Font Info:    Font shape `EU1/NotoSans(0)/m/it' will be
-(Font)              scaled to size 6.43286pt on input line 157.
-LaTeX Font Info:    Font shape `EU1/NotoSans(0)/m/it' will be
-(Font)              scaled to size 4.82465pt on input line 157.
-LaTeX Font Info:    Font shape `EU1/NotoSans(1)/m/n' will be
-(Font)              scaled to size 6.43286pt on input line 157.
-LaTeX Font Info:    Font shape `EU1/NotoSans(1)/m/it' will be
-(Font)              scaled to size 8.80496pt on input line 157.
-LaTeX Font Info:    Font shape `EU1/NotoSans(1)/m/it' will be
-(Font)              scaled to size 6.43286pt on input line 157.
-LaTeX Font Info:    Font shape `EU1/NotoSans(1)/m/it' will be
-(Font)              scaled to size 4.82465pt on input line 157.
- [6
-
-]
-\openout4 = `slides.vrb'.
-
-
-(./slides.vrb
 LaTeX Font Info:    Font shape `EU1/NotoSansMono(0)/m/n' will be
-(Font)              scaled to size 8.80496pt on input line 4.
-) [7
+(Font)              scaled to size 8.80496pt on input line 177.
 
-]
-\openout4 = `slides.vrb'.
 
- (./slides.vrb
-Package mdframed Info: mdframed detected package amsthm 
- changed the theorem header of amsthm
-(mdframed)              on input line 7.
-LaTeX Font Info:    Font shape `EU1/NotoSansMono(0)/m/n' will be
-(Font)              scaled to size 8.04108pt on input line 7.
+LaTeX Font Warning: Font shape `EU1/NotoSansMono(0)/m/it' undefined
+(Font)              using `EU1/NotoSansMono(0)/m/n' instead on input line 177.
+
 LaTeX Font Info:    Font shape `EU1/NotoSansMono(0)/bx/n' will be
-(Font)              scaled to size 8.04108pt on input line 12.
-Package mdframed Info: mdframed inside a box 
- mdframed uses option nobreak mdframed on input line 14.
-) [8
+(Font)              scaled to size 8.80496pt on input line 177.
+LaTeX Font Info:    Font shape `EU1/NotoSans(1)/bx/n' will be
+(Font)              scaled to size 6.43286pt on input line 177.
+LaTeX Font Info:    Font shape `EU1/NotoSans(1)/bx/n' will be
+(Font)              scaled to size 4.82465pt on input line 177.
+[6
 
 ]
-\openout4 = `slides.vrb'.
-
- (./slides.vrb) [9
+LaTeX Font Info:    Font shape `EU1/NotoSans(1)/bx/it' will be
+(Font)              scaled to size 8.80496pt on input line 198.
+LaTeX Font Info:    Font shape `EU1/NotoSans(1)/bx/it' will be
+(Font)              scaled to size 6.43286pt on input line 198.
+LaTeX Font Info:    Font shape `EU1/NotoSans(1)/bx/it' will be
+(Font)              scaled to size 4.82465pt on input line 198.
+ [7
 
 ]
-\openout4 = `slides.vrb'.
+File: background.png Graphic file (type QTm)
+ <use  "background.png" > [8
 
- (./slides.vrb)
+]
+File: ../figures/bison_post_params.png Graphic file (type QTm)
+
+<use  "../figures/bison_post_params.png" > [9
+
+]
+File: ../figures/bison_combined.png Graphic file (type QTm)
+
+<use  "../figures/bison_combined.png" >
+Overfull \vbox (58.57126pt too high) detected at line 219
+ []
+
 [10
 
 ]
-File: figures/density.pdf Graphic file (type QTm)
- <use  "figures/density.pdf" > [11
+File: background.png Graphic file (type QTm)
+ <use  "background.png" > [11
 
-]
-\openout4 = `slides.vrb'.
-
- (./slides.vrb
-
-LaTeX Font Warning: Font shape `EU1/NotoSansMono(0)/m/it' undefined
-(Font)              using `EU1/NotoSansMono(0)/m/n' instead on input line 7.
-
-) [12
+] [12
 
 ]
 File: background.png Graphic file (type QTm)
  <use  "background.png" > [13
-
-]
-\openout4 = `slides.vrb'.
-
- (./slides.vrb
-Package mdframed Info: mdframed detected package amsthm 
- changed the theorem header of amsthm
-(mdframed)              on input line 8.
-Package mdframed Info: mdframed inside a box 
- mdframed uses option nobreak mdframed on input line 15.
-) [14
-
-]
-\openout4 = `slides.vrb'.
-
- (./slides.vrb
-Package mdframed Info: mdframed detected package amsthm 
- changed the theorem header of amsthm
-(mdframed)              on input line 6.
-LaTeX Font Info:    Font shape `EU1/NotoSansMono(0)/m/it' will be
-(Font)              scaled to size 8.04108pt on input line 9.
-Package mdframed Info: mdframed inside a box 
- mdframed uses option nobreak mdframed on input line 15.
-)
-[15
-
-] [16
-
-] [17
-
-]
-\openout4 = `slides.vrb'.
-
- (./slides.vrb) [18
-
-] [19
-
-]
-File: background.png Graphic file (type QTm)
- <use  "background.png" > [20
-
-]
-\openout4 = `slides.vrb'.
-
-
-(./slides.vrb) [21
-
-]
-File: background.png Graphic file (type QTm)
- <use  "background.png" > [22
-
-]
-\openout4 = `slides.vrb'.
-
- (./slides.vrb
-Package mdframed Info: mdframed detected package amsthm 
- changed the theorem header of amsthm
-(mdframed)              on input line 9.
-Package mdframed Info: mdframed inside a box 
- mdframed uses option nobreak mdframed on input line 12.
-File: images/nb.png Graphic file (type QTm)
-
-<use  "images/nb.png" >
-Overfull \hbox (2.27669pt too wide) in paragraph at lines 18--19
-[][] 
- []
-
-) [23
-
-]
-File: background.png Graphic file (type QTm)
- <use  "background.png" > [24
 
 ]
 \tf@nav=\write8
@@ -2410,24 +2339,25 @@ File: background.png Graphic file (type QTm)
 \tf@snm=\write10
 \openout10 = `slides.snm'.
 
-Package atveryend Info: Empty hook `BeforeClearDocument' on input line 406.
-Package atveryend Info: Empty hook `AfterLastShipout' on input line 406.
- (./slides.aux)
-Package atveryend Info: Empty hook `AtVeryEndDocument' on input line 406.
-Package atveryend Info: Empty hook `AtEndAfterFileList' on input line 406.
+Package atveryend Info: Empty hook `BeforeClearDocument' on input line 250.
+Package atveryend Info: Empty hook `AfterLastShipout' on input line 250.
+
+(./slides.aux)
+Package atveryend Info: Empty hook `AtVeryEndDocument' on input line 250.
+Package atveryend Info: Empty hook `AtEndAfterFileList' on input line 250.
 
 
 LaTeX Font Warning: Some font shapes were not available, defaults substituted.
 
-Package atveryend Info: Empty hook `AtVeryVeryEnd' on input line 406.
+Package atveryend Info: Empty hook `AtVeryVeryEnd' on input line 250.
  ) 
 Here is how much of TeX's memory you used:
- 47277 strings out of 493734
- 1047630 string characters out of 6146348
- 1188847 words of memory out of 5000000
- 49757 multiletter control sequences out of 15000+600000
- 9279 words of font info for 72 fonts, out of 8000000 for 9000
+ 47049 strings out of 493734
+ 1042634 string characters out of 6146348
+ 1186262 words of memory out of 5000000
+ 49539 multiletter control sequences out of 15000+600000
+ 12050 words of font info for 87 fonts, out of 8000000 for 9000
  1328 hyphenation exceptions out of 8191
- 72i,12n,119p,10522b,1419s stack positions out of 5000i,500n,10000p,200000b,80000s
+ 72i,18n,119p,10522b,1054s stack positions out of 5000i,500n,10000p,200000b,80000s
 
-Output written on slides.pdf (24 pages).
+Output written on slides.pdf (13 pages).

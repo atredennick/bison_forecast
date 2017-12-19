@@ -24,171 +24,70 @@ Covariate
 
 \includegraphics[width=\textwidth]{../figures/bison_data_plots.png}
 
+\begin{center}
+\textcolor{blue}{training data} $\cdot$ \textcolor{orange}{validation data}
+\end{center}
+
 #	The model
 
 ##	Gompertz population growth
 
 $$
-z_{t} \sim \text{Normal}\left(r + b_0 z_{t-1}\right)
+\text{log}(z_{(t)}) \sim \text{Normal}\left( \text{log}(z_{(t-1)}) + r + b_0 \text{log}(z_{(t-1)}) + b_1 x_{(t)}, \sigma^2_\text{p} \right)
 $$
 
+$z_t$
+: \alert{latent} population abundance in year *t*
 
-## Fonts and spacing
+$r$
+: per capita growth rate
 
-The document uses the \alert{Noto} family -- <https://www.google.com/get/noto/>
+$b_0$
+: density dependence
 
-Main body
-: Noto Sans (or Serif)
+$b_1$
+: effect of snow water equivalent
 
-Maths
-: $\text{Noto Sans}$
+$x_t$
+: accumulated snow water equivalent in year *t*
 
-Code
-: `Noto Mono`
+$\sigma^2_\text{p}$
+: process variance
 
-The linespread value has been increased to about $1.3$
+## Likelihood and fully specified model
+ 
+ Likelihood
 
-## Serif font theme
+ $$
+ y_{(t)} \sim \text{NB} \left(  z_{(t)} , \kappa \right)
+ $$
 
-The default font theme is sans serif. You can change the `template/pl.tex` first line to:
+ Full model
 
-~~~ latex
-@@ -1,4 +1,4 @@
--\documentclass[11pt, compress, aspectratio=1610]{beamer}
-+\documentclass[11pt, compress, aspectratio=1610, serif]{beamer}
+ $$
+ \left[ \boldsymbol{\theta}_\text{p}, \kappa, z_{(t)}, z_{(t-1)} | y_{(t)}, x_{(t)} \right ] \propto \prod_{t=2}^{58} \underbrace{\left[ z_{(t)} | \boldsymbol{\theta}_\text{p}, z_{(t-1)}, x_{(t)} \right]}_{\text{process}} \prod_{t=1}^{48} \underbrace{\left[ y_{(t)} | \kappa, z_{(t)} \right]}_{\text{data}} \underbrace{\left[ \boldsymbol{\theta}_\text{p}, \kappa, z_{(t=1)}\right]}_{\text{parameters}}
+ $$
 
-\usetheme{pl}
-~~~
+ Includes a strong prior on $r$ based on Hobbs et al. 2015: $r \sim \text{Normal}(0.1, 0.02)$
 
-## Colors
+# Results
 
-The structure elements are in green, inline code is in `blue`, and alerted text
-in \alert{orange}.
+## Posterior distributions of parameters
 
-The background is off-white: it will *look* like it's white, but with less
-eyestrain.
+\includegraphics[width=\textwidth]{../figures/bison_post_params.png}
 
-The foreground is not-quite-black either.
+\alert{Note}: posterior distrbution of $r$ totally informed by prior.
 
-## Tables
+## Posterior predictions, forecasts, and forecast partition
 
-| PID   | COMMAND        | %CPU | TIME     | #TH |
-|:------|:---------------|-----:|:---------|:---:|
-| 25645 | `top`          | 16.3 | 00:02.03 | 1/1 |
-| 25642 | `bash`         |  0.0 | 00:00.01 |  1  |
-| 25641 | `login`        |  0.0 | 00:00.02 |  2  |
-| 25634 | `mdworker`     |  0.0 | 00:00.07 |  3  |
-| 25624 | `mdworker`     |  0.0 | 00:00.14 |  4  |
-| 25591 | `mdworker`     |  0.0 | 00:00.14 |  3  |
-| 25571 | `com.apple.iC` |  0.0 | 00:00.31 |  5  |
-| 25414 | `installd`     |  0.0 | 00:00.52 |  2  |
-| 25366 | `com.apple.We` |  0.0 | 00:00.07 |  4  |
+\includegraphics[height=\textheight]{../figures/bison_combined.png}
 
-## Using images
+# Take home messages
 
-\includegraphics[width=\textwidth]{figures/density.pdf}
+## Take home
 
-## Maths
+1. Snow water equivalent effect is weak -- right covariate?
+2. Forecast uncertainty is large.
+3. Forecast unceratinty dominated by (simulated) uncertainty of snow water equivalent
 
-The Input family of fonts has some support for Greek and mathematical symbols:
 
-$$
-\frac{1}{N}\frac{\text{d}}{\text{d}t}N = N\left(r-\alert{\alpha N}\right)
-$$
-
-You can use `\alert` within math blocks.
-
-# Using sections
-
-## Section titles
-
-Every section will have a small band with the background image.
-
-They are first-level headers in markdown:
-
-~~~ md
-# Section
-
-## Slide-title
-
-Slide content
-~~~
-
-## Code highlighting
-
-There is a customized color scheme for code highlighting.
-
-~~~ julia
-α = 2.0
-b, c = "abc", 'c'
-# This code does nothing (useful)
-for i in 1:10
-  rand()
-  @elapsed println("i:\t$i")
-end
-~~~
-
-We can also use \alert{unicode characters}.
-
-## Visual counter
-
-The circle next to the title of each slide moves forward at every slide
-(including the section changes).
-
-It is a useful visual key for how much slides are left.
-
-## Output
-
-Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac
-turpis egestas. Morbi sollicitudin nisi vitae lorem interdum, eget elementum
-quam elementum. Curabitur quis leo eu metus consequat ultricies. Curabitur sit
-amet convallis risus. Cras vel arcu id risus efficitur commodo et eget velit.
-Curabitur consequat eleifend magna, ut ultricies lorem scelerisque eu. Mauris
-faucibus neque sit amet est elementum, suscipit placerat est interdum. Phasellus
-sed convallis est. Nunc fermentum convallis odio eget gravida. Duis venenatis
-dictum tempor.
-
-## Background image
-
-The background image is generated from the `makebackground.jl` file. It's the
-k-nearest neighbour graph of a series of random points.
-
-The file is `background.png` -- it can be replaced by any file \alert{as long
-as} the replacement file is in the 16:10 format (for example, a 1600 $\times$
-1000 image).
-
-## Final slide
-
-The final slide displays the background picture.
-
-This is to avoid the awkward "Switching to black" thing that happens when there
-are no slides left.
-
-# Reproducible documents
-
-## It's in the Makefile
-
-Documents `slides.Jmd` and `slides.Rmd` will be detected.
-
-They will be converted to `slides.md` using either `R`/`knitr` or `Julia`/`Weave.jl`.
-
-# Specific commands
-
-## Cropped images
-
-\begincols
-\column{0.68\textwidth}
-
-The `roundpicture` command will display a picture, resized to fit into a circle:
-
-~~~ latex
-\roundpicture{images/nb.png}{Optional text}
-~~~
-
-Note that the image \alert{must} be a square.
-
-\hfill\column{0.28\textwidth}
-
-\roundpicture{images/nb.png}{}
-
-\stopcols
