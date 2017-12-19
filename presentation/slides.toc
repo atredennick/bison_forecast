@@ -1,0 +1,6 @@
+\beamer@endinputifotherversion {3.33pt}
+\beamer@sectionintoc {1}{The data}{3}{0}{1}
+\beamer@sectionintoc {2}{The model}{5}{0}{2}
+\beamer@sectionintoc {3}{Using sections}{13}{0}{3}
+\beamer@sectionintoc {4}{Reproducible documents}{20}{0}{4}
+\beamer@sectionintoc {5}{Specific commands}{22}{0}{5}
