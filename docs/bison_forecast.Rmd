@@ -24,7 +24,7 @@ urlcolor: black
 
 \begin{center}
 
-\large{\textbf{Quantifying the limits to forecasting the impacts of environmental change the Yellowstone bison population}}
+\Large{\textbf{Quantifying the limits to forecasting the impacts of environmental change on the Yellowstone bison population}}
 
 \renewcommand*{\thefootnote}{\fnsymbol{footnote}}
 
@@ -105,7 +105,7 @@ The fully specified model, including a model of the ecological process, a model 
 \vspace{-2em}
 
 \begin{align}
-\left[ \boldsymbol{\theta}_\text{p}, \kappa, z_{(t)}, z_{(t-1)} | y_{(t)}, x_{(t)} \right ] &\propto \prod_{t=2}^{58} \underbrace{\left[ z_{(t)} | \boldsymbol{\theta}_\text{p}, z_{(t-1)}, x_{(t)} \right]}_{\text{process}} \prod_{t=1}^{48} \underbrace{\left[ y_{(t)} | \kappa, z_{(t)} \right]}_{\text{data}} \underbrace{\left[ \boldsymbol{\theta}_\text{p}, \kappa, z_{(t=1)}\right]}_{\text{parameters}},
+\left[ \boldsymbol{\theta}_\text{p}, \kappa, z_{(t)} | y_{(t)}, x_{(t)} \right ] &\propto \prod_{t=2}^{48} \underbrace{\left[ z_{(t)} | \boldsymbol{\theta}_\text{p}, z_{(t-1)}, x_{(t)} \right]}_{\text{process}} \prod_{t=1}^{41} \underbrace{\left[ y_{(t)} | \kappa, z_{(t)} \right]}_{\text{data}} \underbrace{\left[ \boldsymbol{\theta}_\text{p}, \kappa, z_{(t=1)}\right]}_{\text{parameters}},
 \end{align}
 
 where the notation $[a|b,c]$ reads as the probability or probability density of *a* conditional on *b* and *c* (Hobbs and Hooten 2015).
@@ -192,11 +192,32 @@ where each additive term follows a pattern of *sensitivity* times *variance*.
 Thus, the variance attributable to any particular factor is a function of how sensitive the model is to the factor and the variance of that factor.
 For example, large sensitivity to the covariate $x$ can be compensated for if the uncertainty of the covariate is low.
 
+We used the posterior distributions of model parameters to conduct numerical simulations that sequentially introduced the sources of uncertainty shown in equation 4 (parameter, driver, initial condition, process) (Dietze et al. 2017).
+For example, to isolate the impact of initial conditions uncertainty on forecast uncertainty, we used the posterior median of all model parameters and made $k=1000$ seven-year forecasts with 1000 unique initial conditions ($z^k_{(t=\text{2010})}$) sampled from the posterior distribution of the latent population state in the year 2010, $z_{t=\text{2010}}$.
+We then conducted similar simulations with parameter uncertainty, then driver uncertainty, and then process uncertainty.
+Uncertainty was incorporated by sampling from the posterior distributions, except for process error.
+Uncertainty was included for process error by simulating the dynamic process (eq. 2) using the posterior median estimate for process variance ($\sigma^2_{\text{p}}$).
+
+We partitioned forecast uncertainty by calculating the variance of the 1000 forecasts in each year for each simulation described above.
+We then divided the variance of each simulation in each year by the maximum forecast variance (simulation with uncertainty from all sources).
+This resulted in estimates of the proportion of total forecast variance in each year that can be attributed to each source of uncertainty described in equation 4.
 
 
 # Results
 
+The posterior distributions of model parameters show that density-dependence is evident but weak ($b_0$ in Fig. 2), accumulated snow water equivalent has a weak negative effect on bison population growth ($b_1$ in Fig. 2), and that the prior distribution of per capita growth rate entirely informed the posterior distribution ($r$ in Fig. 2).
+The complete overlap of the prior and posterior distributions for $r$ is not unexpected because we used a strong prior informed by a previous study using this same data (though with a different model) (Hobbs et al. 2015).
+
+Model forecasts are very uncertain and grew over time (Fig. 3A).
+Indeed, by 2017 forecasts ranged from ~2,000 bison to over 10,000 bison.
+Forecast uncertainty mostly comes from driver error, which accounts for about 70\% of total forecast variance (Fig. 3B).
+Initial conditions error is consistently low across all years, as is parameter error.
+Process error contributes about 15-25\% across all years.
+
+
 # Discussion
+
+Something profound...
 
 # Acknowledgements
 
