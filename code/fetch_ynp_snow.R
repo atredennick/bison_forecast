@@ -31,14 +31,17 @@ library(wux)
 ####
 ####  FETCH THE WEST YELLOWSTONE SNOTEL DATA (SITE #924) ----
 ####
-setwd("../data/")
 
 ### WEST YELLOWSTONE SNOTEL
-snotel.info(path = ".") 
+snotel.info(path = "../data/.") 
 download.snotel(site = 924) 
 file.remove("snotel_metadata.csv")
 
-ynp_snotel <- read.csv("snotel_924.csv", skip = 58) %>%
+##  Collate the data into water years (October - April)
+water_months <- as.character(c(10,11,12,1,2,3,4))
+addyear_months <- as.character(c(10,11,12))
+
+ynp_snotel <- read.csv("../data/snotel_924.csv", skip = 58) %>%
   dplyr::rename(date = Date,
                 snow_water_eq_mm    = Snow.Water.Equivalent..mm..Start.of.Day.Values,
                 precip_accum_mm     = Precipitation.Accumulation..mm..Start.of.Day.Values,
@@ -47,13 +50,18 @@ ynp_snotel <- read.csv("snotel_924.csv", skip = 58) %>%
                 avg_air_temp_degC   = Air.Temperature.Average..degC.,
                 precip_increment_mm = Precipitation.Increment..mm.) %>%
   separate(date, into = c("year", "month", "day"), sep = "-") %>%
-  group_by(year) %>%
+  filter(month %in% water_months) %>%
+  mutate(year = as.numeric(year),
+         newyear = ifelse(month %in% addyear_months, year+1, year)) %>%
+  group_by(newyear) %>%
   summarise(mean_snow_water_equiv_mm  = mean(snow_water_eq_mm, na.rm=TRUE),
             accum_snow_water_equiv_mm = sum(snow_water_eq_mm, na.rm=TRUE),
             max_snow_water_equiv_mm   = max(snow_water_eq_mm, na.rm=TRUE),
-            sd_snow_water_equiv_mm    = sd(snow_water_eq_mm, na.rm=TRUE))
+            sd_snow_water_equiv_mm    = sd(snow_water_eq_mm, na.rm=TRUE)) %>%
+    dplyr::rename(year = newyear) %>%
+    arrange(year)
 
-write.csv(ynp_snotel, "west_yellowstone_snotel_summary.csv")
+write.csv(ynp_snotel, "../data/west_yellowstone_snotel_summary.csv")
 
 
 
