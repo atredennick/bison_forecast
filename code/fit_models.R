@@ -172,11 +172,11 @@ mc3.out <- coda.samples(model=mc3,
 #    geom_point()+
 #    geom_abline(aes(intercept=0, slope=1), color="red")
 # 
-# ggs(mc3.out) %>%
-#   filter(Parameter %in% c("r","b","b1")) %>%
-#   ggplot(aes(x=value))+
-#   geom_histogram()+
-#   facet_wrap(~Parameter, scales = "free")
+ggs(mc3.out) %>%
+  filter(Parameter %in% c("r","b","b1")) %>%
+  ggplot(aes(x=value))+
+  geom_histogram()+
+  facet_wrap(~Parameter, scales = "free")
 # 
 # outstats <- summary(mc3.out)$stat
 # outquant <- summary(mc3.out)$quantile

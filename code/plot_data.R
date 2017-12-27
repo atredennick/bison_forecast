@@ -33,7 +33,7 @@ source("./utilities/plotting_theme.R") # Source my plotting theme
 snow_ynp  <- read.csv("../data/west_yellowstone_snotel_summary.csv", row.names = 1) 
 bison_raw <- read.csv("../data/YNP_bison_population_size.csv")
 bison_dat <- bison_raw %>% 
-  dplyr::select(-source) %>%     # drop the source column
+  dplyr::select(-ends_with("source")) %>%     # drop the source column
   mutate(set = ifelse(year < 2011, "training", "validation")) %>% # make new column for data splits
   left_join(snow_ynp, by="year") # merge in SNOTEL data
 
