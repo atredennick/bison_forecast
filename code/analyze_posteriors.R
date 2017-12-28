@@ -73,6 +73,9 @@ post_params <- post_params %>%
 
 docolor   <- "#278DAF"
 prior_col <- "#CF4C26"
+post_params$parameter <- as.factor(post_params$parameter)
+levels(post_params$parameter) <- c(expression(beta[0]), expression(beta[1]), "r", expression(sigma[p]))
+
 ggplot(post_params, aes(x = estimate, y = ..density..))+
   geom_histogram(fill = docolor, color = "white", bins = 30)+
   geom_line(data = filter(post_params, parameter == "r"),
@@ -84,7 +87,7 @@ ggplot(post_params, aes(x = estimate, y = ..density..))+
             aes(x = prior), 
             stat = "density", 
             color = prior_col)+
-  facet_wrap(~parameter, scales = "free", ncol = 4)+
+  facet_wrap(~parameter, scales = "free", ncol = 4, labeller = label_parsed)+
   ylab("Posterior density")+
   xlab("Parameter estimate")+
   my_theme

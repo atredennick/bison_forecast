@@ -34,11 +34,30 @@ library(ecoforecastR) # MCMC manipulation (by M. Dietze; modified by A. Tredenni
 ####  LOAD DATA ----------------------------------------------------------------
 ####
 snow_ynp  <- read.csv("../data/west_yellowstone_snotel_summary.csv", row.names = 1)
+weather_dat <- read.csv("../data/PRISM_ppt_tmin_tmean_tmax_tdmean_vpdmin_vpdmax_provisional_4km_197001_201711_44.8090_-110.5728.csv", skip = 10)
 bison_raw <- read.csv("../data/YNP_bison_population_size.csv")
+
+##  Reformat weather data from PRISM
+weather_dat <- weather_dat %>%
+  dplyr::select(-tdmean..degrees.F., -vpdmin..hPa., -vpdmax..hPa.) %>%
+  dplyr::rename(date = Date,
+                ppt_in = ppt..inches.,
+                tmin_F = tmin..degrees.F.,
+                tmean_F = tmean..degrees.F.,
+                tmax_F = tmax..degrees.F.) %>%
+  separate(date, into = c("year", "month"), sep = "-")
+
+precip_dat <- weather_dat %>%
+  dplyr::select(year, month, ppt_in) %>%
+  filter(month %in% c("01")) %>%
+  mutate(year = as.integer(year))
+
+##  Reformat bison data and combine with weather data
 bison_dat <- bison_raw %>% 
   dplyr::select(-ends_with("source")) %>%     # drop the source column
   mutate(set = ifelse(year < 2011, "training", "validation")) %>% # make new column for data splits
-  left_join(snow_ynp, by="year") # merge in SNOTEL data
+  left_join(snow_ynp, by="year") %>% # merge in SNOTEL data
+  left_join(precip_dat, by="year")
 
 
 
@@ -57,9 +76,9 @@ my_model <- "
     eta        ~ dunif(0, 50)
     
     #### Fixed Effects Priors
-    r  ~ dnorm(0.1, 1/0.02^2) # intrinsic growth rate, informed prior
-    b  ~ dnorm(0,0.0001)      # strength of density dependence
-    b1 ~ dnorm(0,0.0001)      # effect of snow
+    r  ~ dnorm(0.1, 1/0.02^2)  # intrinsic growth rate, informed prior
+    b  ~ dnorm(0,1/2^2)I(-2,2) # strength of density dependence, bounded
+    b1 ~ dnorm(0,0.0001)       # effect of Jan. precip in year t
     
     #### Initial Conditions
     z[1]    ~ dnorm(Nobs[1], tau_obs[1]) # varies around observed abundance at t = 1
@@ -67,8 +86,11 @@ my_model <- "
     
     #### Process Model
     for(t in 2:npreds){
+      # Calculate log integration of extractions
+      e[t] = log( abs( 1 - (E[t] / z[t-1]) ) ) 
+
       # Gompertz growth, on log scale
-      mu[t]   <- zlog[t-1] + r + b*zlog[t-1] + b1*x[t]
+      mu[t]   <- zlog[t-1] + e[t] + r + b*(zlog[t-1] + e[t]) + b1*x[t]
       zlog[t] ~ dnorm(mu[t], tau_proc)
       z[t]    <- exp(zlog[t]) # back transform to arithmetic scale
     }
@@ -111,12 +133,12 @@ training_dat   <- filter(bison_dat, set == "training")
 validation_dat <- filter(bison_dat, set == "validation")
 
 ##  Set up SWE knowns (2011-2017), relative to scaling of observations
-swe_mean     <- mean(training_dat$accum_snow_water_equiv_mm)
-swe_sd       <- sd(training_dat$accum_snow_water_equiv_mm)
-forecast_swe <- snow_ynp %>%
+ppt_mean     <- mean(training_dat$ppt_in)
+ppt_sd       <- sd(training_dat$ppt_in)
+forecast_ppt <- precip_dat %>%
   filter(year %in% validation_dat$year) %>%
-  pull(accum_snow_water_equiv_mm)
-scl_fut_swe  <- (forecast_swe - swe_mean) / swe_sd
+  pull(ppt_in)
+scl_fut_ppt  <- (forecast_ppt - ppt_mean) / ppt_sd
 
 ##  Set initial values for unkown parameters
 inits <- list(
@@ -139,11 +161,14 @@ inits <- list(
 ####
 ####  FIT AND FORECAST WITH KNOWN SWE
 ####
+extractions <- training_dat$wint.removal
+extractions[is.na(extractions) == TRUE] <- 0
 ##  Prepare data list
 mydat <- list(Nobs    = round(training_dat$count.mean), # mean counts
+              E       = c(extractions, validation_dat$wint.removal),
               n       = nrow(training_dat), # number of observations
               tau_obs = 1/training_dat$count.sd^2, # transform s.d. to precision
-              x       = c(as.numeric(scale(training_dat$accum_snow_water_equiv_mm)),scl_fut_swe), # snow depth, plus forecast years
+              x       = c(as.numeric(scale(training_dat$ppt_in)),scl_fut_ppt), # snow depth, plus forecast years
               npreds  = nrow(training_dat)+nrow(validation_dat)) # number of total predictions (obs + forecast)
 
 ##  Random variables to collect
@@ -160,20 +185,20 @@ mc3.out <- coda.samples(model=mc3,
                         variable.names=out_variables, 
                         n.iter=10000) 
 
-# ggs(mc3.out) %>%
-#   filter(Parameter %in% c("r")) %>%
-#   ggplot(aes(x=Iteration,y = value, color = as.factor(Chain)))+
-#   geom_line()
-# 
-# ggs(mc3.out) %>%
-#   filter(Parameter %in% c("fit", "fit.new")) %>%
-#   spread(Parameter, value) %>%
-#   ggplot(aes(x=fit, y=fit.new))+
-#    geom_point()+
-#    geom_abline(aes(intercept=0, slope=1), color="red")
+ggs(mc3.out) %>%
+  filter(Parameter %in% c("b1")) %>%
+  ggplot(aes(x=Iteration,y = value, color = as.factor(Chain)))+
+  geom_line()
 # 
 ggs(mc3.out) %>%
-  filter(Parameter %in% c("r","b","b1")) %>%
+  filter(Parameter %in% c("fit", "fit.new")) %>%
+  spread(Parameter, value) %>%
+  ggplot(aes(x=fit, y=fit.new))+
+   geom_point()+
+   geom_abline(aes(intercept=0, slope=1), color="red")
+# 
+ggs(mc3.out) %>%
+  filter(Parameter %in% c("r","b","b1","eta")) %>%
   ggplot(aes(x=value))+
   geom_histogram()+
   facet_wrap(~Parameter, scales = "free")

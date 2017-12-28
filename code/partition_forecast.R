@@ -41,7 +41,7 @@ source("./utilities/plotting_theme.R")
 snow_ynp  <- read.csv("../data/west_yellowstone_snotel_summary.csv", row.names = 1) 
 bison_raw <- read.csv("../data/YNP_bison_population_size.csv")
 bison_dat <- bison_raw %>% 
-  dplyr::select(-source) %>%     # drop the source column
+  dplyr::select(-ends_with("source")) %>%     # drop the source column
   mutate(set = ifelse(year < 2011, "training", "validation")) %>% # make new column for data splits
   left_join(snow_ynp, by="year") # merge in SNOTEL data
 
@@ -102,6 +102,7 @@ calibration_plot <- ggplot(prediction_df, aes(x=year))+
                 size=0.2)+
   geom_point(aes(y=observation), color=obs_color, size=0.5)+
   geom_vline(aes(xintercept=2010), linetype=2,color="grey55")+
+  geom_col(data = bison_dat, aes(x = year, y = wint.removal), color = "grey55", fill = "grey55", width = 0.3)+
   ylab("Number of bison")+
   xlab("Year")+
   my_theme

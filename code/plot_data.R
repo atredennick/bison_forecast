@@ -31,11 +31,30 @@ source("./utilities/plotting_theme.R") # Source my plotting theme
 ####  LOAD DATA ----------------------------------------------------------------
 ####
 snow_ynp  <- read.csv("../data/west_yellowstone_snotel_summary.csv", row.names = 1) 
+weather_dat <- read.csv("../data/PRISM_ppt_tmin_tmean_tmax_tdmean_vpdmin_vpdmax_provisional_4km_197001_201711_44.8090_-110.5728.csv", skip = 10)
 bison_raw <- read.csv("../data/YNP_bison_population_size.csv")
+
+##  Reformat weather data from PRISM
+weather_dat <- weather_dat %>%
+  dplyr::select(-tdmean..degrees.F., -vpdmin..hPa., -vpdmax..hPa.) %>%
+  dplyr::rename(date = Date,
+                ppt_in = ppt..inches.,
+                tmin_F = tmin..degrees.F.,
+                tmean_F = tmean..degrees.F.,
+                tmax_F = tmax..degrees.F.) %>%
+  separate(date, into = c("year", "month"), sep = "-")
+
+precip_dat <- weather_dat %>%
+  dplyr::select(year, month, ppt_in) %>%
+  filter(month %in% c("01")) %>%
+  mutate(year = as.integer(year))
+
+##  Reformat bison data and combine with weather data
 bison_dat <- bison_raw %>% 
   dplyr::select(-ends_with("source")) %>%     # drop the source column
   mutate(set = ifelse(year < 2011, "training", "validation")) %>% # make new column for data splits
-  left_join(snow_ynp, by="year") # merge in SNOTEL data
+  left_join(snow_ynp, by="year") %>% # merge in SNOTEL data
+  left_join(precip_dat, by="year")
 
 
 
@@ -43,8 +62,7 @@ bison_dat <- bison_raw %>%
 ####  PLOT BISON AND SNOW DATA -------------------------------------------------
 ####
 plot_data <- bison_dat %>%
-  dplyr::select(year, set, count.mean, count.sd, accum_snow_water_equiv_mm) %>%
-  dplyr::rename(avg_swe = accum_snow_water_equiv_mm)
+  dplyr::select(year, set, count.mean, count.sd, wint.removal, ppt_in)
 
 docolor  <- "#278DAF"
 altcolor <- "#CF4C26"
@@ -52,6 +70,7 @@ bison_plot <- ggplot(plot_data, aes(x = year, y = count.mean, color = set))+
   geom_line(alpha = 0.6)+
   geom_point(size=1.5)+
   geom_errorbar(aes(ymin = count.mean-count.sd, ymax = count.mean+count.sd), width=0.5, size=0.5)+
+  geom_col(aes(y = wint.removal), color = "grey55", fill = "grey55", width = 0.3)+
   scale_color_manual(values = c(docolor, altcolor))+
   scale_y_continuous(breaks = seq(0,6000,1000))+
   ylab("Number of bison")+
@@ -59,11 +78,11 @@ bison_plot <- ggplot(plot_data, aes(x = year, y = count.mean, color = set))+
   my_theme+
   guides(color = FALSE)
 
-snow_plot <- ggplot(plot_data, aes(x = year, y = avg_swe, color = set))+
+snow_plot <- ggplot(plot_data, aes(x = year, y = ppt_in, color = set))+
   geom_line(alpha = 0.6)+
   geom_point(size=1.5)+
   scale_color_manual(values = c(docolor, altcolor))+
-  ylab("Accumulated SWE (mm)")+
+  ylab("January Precipitation (in)")+
   xlab("Year")+
   my_theme+
   guides(color = FALSE)
