@@ -21,6 +21,7 @@ setwd(paste0(root,"code/"))
 ####
 library(tidyverse) # Data science functions
 library(dplyr)     # Data wrangling
+library(ggthemes)  # Pleasing themese for ggplot2
 library(rjags)     # Fitting Bayesian models with JAGS
 library(coda)      # MCMC summaries
 library(ggmcmc)    # MCMC-to-dataframe functions
@@ -71,7 +72,7 @@ my_model <- "
   model{
 
     #### Variance Priors
-    sigma_proc ~ dgamma(0.01,0.01)
+    sigma_proc ~ dunif(0,5)
     tau_proc   <- 1/sigma_proc^2
     eta        ~ dunif(0, 50)
     
@@ -99,6 +100,7 @@ my_model <- "
     for(j in 2:n){
       p[j]     <- eta/(eta + z[j]) # calculate NB centrality parameter
       Nobs[j]  ~ dnegbin(p[j], eta) # NB likelihood
+      #Nobs[j] ~ dnorm(z[j], tau_obs[j])
     }
     
     ####  Derived Quantities for Model Evaluation
@@ -109,9 +111,11 @@ my_model <- "
       # Simulate new data
       p2[i]        <- eta/(eta + z[i])
       Nnew [i]     ~ dnegbin(p2[i], eta)
-      sqerr[i]     <- (Nobs[i] - z[i])^2
-      sqerr_new[i] <- (Nnew[i] - z[i])^2
+      #Nnew[i] ~ dnorm(z[i], tau_obs[i])
+      sqerr[i]     <- ((Nobs[i] - z[i])^2)/Nobs[i]
+      sqerr_new[i] <- ((Nnew[i] - z[i])^2)/Nnew[i]
     }
+
     fit     <- sum(sqerr[])
     fit.new <- sum(sqerr_new[])
     pvalue  <- step(fit.new-fit)
@@ -124,7 +128,6 @@ my_model <- "
 ####  Fit Bison Forecasting Model ----------------------------------------------
 ####
 ##  For years without observation error, set to max observed standard deviation
-##  TODO: Impute sigma_obs in the model?
 na_sds                       <- which(is.na(bison_dat$count.sd)==T)
 bison_dat[na_sds,"count.sd"] <- max(bison_dat$count.sd, na.rm=T)
 
@@ -159,7 +162,7 @@ inits <- list(
 
 
 ####
-####  FIT AND FORECAST WITH KNOWN SWE
+####  FIT AND FORECAST WITH KNOWN JAN PPT --------------------------------------
 ####
 extractions <- training_dat$wint.removal
 extractions[is.na(extractions) == TRUE] <- 0
@@ -172,7 +175,7 @@ mydat <- list(Nobs    = round(training_dat$count.mean), # mean counts
               npreds  = nrow(training_dat)+nrow(validation_dat)) # number of total predictions (obs + forecast)
 
 ##  Random variables to collect
-out_variables <- c("r", "b", "b1", "eta", "sigma_proc", "z", "pvalue", "fit", "fit.new")
+out_variables <- c("r", "b", "b1", "sigma_proc", "z", "pvalue", "fit", "fit.new")
 
 ##  Send to JAGS
 mc3     <- jags.model(file = textConnection(my_model), 
@@ -185,48 +188,64 @@ mc3.out <- coda.samples(model=mc3,
                         variable.names=out_variables, 
                         n.iter=10000) 
 
-ggs(mc3.out) %>%
-  filter(Parameter %in% c("b1")) %>%
-  ggplot(aes(x=Iteration,y = value, color = as.factor(Chain)))+
-  geom_line()
+# ggs(mc3.out) %>%
+#   filter(Parameter %in% c("b1")) %>%
+#   ggplot(aes(x=Iteration,y = value, color = as.factor(Chain)))+
+#   geom_line()
 # 
-ggs(mc3.out) %>%
+
+outstats <- summary(mc3.out)$stat
+pval <- outstats[which(rownames(outstats)=="pvalue"),"Mean"]
+
+mc_disc <- ggs(mc3.out) %>%
   filter(Parameter %in% c("fit", "fit.new")) %>%
-  spread(Parameter, value) %>%
-  ggplot(aes(x=fit, y=fit.new))+
-   geom_point()+
-   geom_abline(aes(intercept=0, slope=1), color="red")
-# 
-ggs(mc3.out) %>%
-  filter(Parameter %in% c("r","b","b1","eta")) %>%
-  ggplot(aes(x=value))+
-  geom_histogram()+
-  facet_wrap(~Parameter, scales = "free")
-# 
+  spread(Parameter, value)
+
+max_val <- round(max(c(max(mc_disc$fit), max(mc_disc$fit.new))))+1000
+
+ggplot(mc_disc, aes(x=fit, y=fit.new))+
+  geom_point(size = 0.1)+
+  geom_abline(aes(intercept=0, slope=1), color="black")+
+  xlab("Observed discrepency")+
+  ylab("Simulated discrepency")+
+  scale_x_continuous(limits = c(0,max_val), expand = c(0, 0))+
+  scale_y_continuous(limits = c(0,max_val), expand = c(0, 0))+
+  annotate("text", x = 6000, y = 1000, label = paste0("Bayesian P value = ",as.character(round(pval,2))), size=3)+
+  theme_classic()+
+  theme(plot.margin=unit(c(0.5,0.5,0.1,0.1),"cm"))
+ggsave(filename = "../figures/posterior_check.png", width = 4, height = 4, units = "in", dpi = 200)
+
+# ggs(mc3.out) %>%
+#   filter(Parameter %in% c("r","b","b1","eta")) %>%
+#   ggplot(aes(x=value))+
+#   geom_histogram()+
+#   facet_wrap(~Parameter, scales = "free")
+
 # outstats <- summary(mc3.out)$stat
 # outquant <- summary(mc3.out)$quantile
 # outstats[which(rownames(outstats)=="pvalue"),"Mean"]
 
 ##  Split MCMC output for file constraints
-saveRDS(mc3.out[[1]],"../results/swe_est_posteriors_chain1.RDS")
-saveRDS(mc3.out[[2]],"../results/swe_est_posteriors_chain2.RDS")
-saveRDS(mc3.out[[3]],"../results/swe_est_posteriors_chain3.RDS")
+saveRDS(mc3.out[[1]],"../results/ppt_est_posteriors_chain1.RDS")
+saveRDS(mc3.out[[2]],"../results/ppt_est_posteriors_chain2.RDS")
+saveRDS(mc3.out[[3]],"../results/ppt_est_posteriors_chain3.RDS")
 
 
 
 ####
-####  FIT AND FORECAST ASSUMING AVG SWE
+####  FIT AND FORECAST ASSUMING AVG JAN PPT ------------------------------------
 ####
-scl_fut_swe[] <- 0 # average is 0 by definition
+scl_fut_ppt[] <- 0 # average is 0 by definition
 ##  Prepare data list
 mydat <- list(Nobs    = round(training_dat$count.mean), # mean counts
+              E       = c(extractions, validation_dat$wint.removal),
               n       = nrow(training_dat), # number of observations
               tau_obs = 1/training_dat$count.sd^2, # transform s.d. to precision
-              x       = c(as.numeric(scale(training_dat$accum_snow_water_equiv_mm)),scl_fut_swe), # snow depth, plus forecast years
+              x       = c(as.numeric(scale(training_dat$ppt_in)),scl_fut_ppt), # snow depth, plus forecast years
               npreds  = nrow(training_dat)+nrow(validation_dat)) # number of total predictions (obs + forecast)
 
 ##  Random variables to collect
-out_variables <- c("r", "b", "b1", "eta", "sigma_proc", "z", "pvalue", "fit", "fit.new")
+out_variables <- c("r", "b", "b1", "sigma_proc", "z", "pvalue", "fit", "fit.new")
 
 ##  Send to JAGS
 mc3     <- jags.model(file = textConnection(my_model), 
@@ -239,9 +258,9 @@ mc3.out <- coda.samples(model = mc3,
                         n.iter = 10000)
 
 ##  Split MCMC output for file constraints
-saveRDS(mc3.out[[1]],"../results/swe_avg_posteriors_chain1.RDS")
-saveRDS(mc3.out[[2]],"../results/swe_avg_posteriors_chain2.RDS")
-saveRDS(mc3.out[[3]],"../results/swe_avg_posteriors_chain3.RDS")
+saveRDS(mc3.out[[1]],"../results/ppt_avg_posteriors_chain1.RDS")
+saveRDS(mc3.out[[2]],"../results/ppt_avg_posteriors_chain2.RDS")
+saveRDS(mc3.out[[3]],"../results/ppt_avg_posteriors_chain3.RDS")
 
 
 

@@ -46,12 +46,12 @@ bison_dat <- bison_raw %>%
   left_join(snow_ynp, by="year") # merge in SNOTEL data
 
 ##  MCMC
-swe_est_posts <- as.mcmc.list(list(readRDS("../results/swe_est_posteriors_chain1.RDS"),
-                                   readRDS("../results/swe_est_posteriors_chain2.RDS"),
-                                   readRDS("../results/swe_est_posteriors_chain3.RDS")))
-swe_avg_posts <- as.mcmc.list(list(readRDS("../results/swe_avg_posteriors_chain1.RDS"),
-                                   readRDS("../results/swe_avg_posteriors_chain2.RDS"),
-                                   readRDS("../results/swe_avg_posteriors_chain3.RDS")))
+ppt_est_posts <- as.mcmc.list(list(readRDS("../results/ppt_est_posteriors_chain1.RDS"),
+                                   readRDS("../results/ppt_est_posteriors_chain2.RDS"),
+                                   readRDS("../results/ppt_est_posteriors_chain3.RDS")))
+ppt_avg_posts <- as.mcmc.list(list(readRDS("../results/ppt_avg_posteriors_chain1.RDS"),
+                                   readRDS("../results/ppt_avg_posteriors_chain2.RDS"),
+                                   readRDS("../results/ppt_avg_posteriors_chain3.RDS")))
 
 
 
@@ -60,7 +60,7 @@ swe_avg_posts <- as.mcmc.list(list(readRDS("../results/swe_avg_posteriors_chain1
 ####
 ## Split output
 out          <- list(params=NULL, predict=NULL)
-mfit         <- as.matrix(swe_est_posts,chains=TRUE)
+mfit         <- as.matrix(ppt_est_posts,chains=TRUE)
 pred.cols    <- union(grep("z[",colnames(mfit),fixed=TRUE),grep("mu[",colnames(mfit),fixed=TRUE))
 chain.col    <- which(colnames(mfit)=="CHAIN")
 out$predict  <- mat2mcmc.list(mfit[,c(chain.col,pred.cols)])
