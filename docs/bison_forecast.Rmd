@@ -9,7 +9,6 @@ header-includes:
   - \usepackage{rotating}
   - \usepackage{color, soul}
   - \usepackage[document]{ragged2e}
-  - \usepackage[sc]{mathpazo}
 layout: 11pt
 linkcolor: black
 output:
