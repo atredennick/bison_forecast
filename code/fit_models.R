@@ -168,7 +168,7 @@ extractions <- training_dat$wint.removal
 extractions[is.na(extractions) == TRUE] <- 0
 ##  Prepare data list
 mydat <- list(Nobs    = round(training_dat$count.mean), # mean counts
-              E       = c(extractions, validation_dat$wint.removal),
+              E       = c(extractions,validation_dat$wint.removal),
               n       = nrow(training_dat), # number of observations
               tau_obs = 1/training_dat$count.sd^2, # transform s.d. to precision
               x       = c(as.numeric(scale(training_dat$ppt_in)),scl_fut_ppt), # snow depth, plus forecast years
