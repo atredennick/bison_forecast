@@ -1,5 +1,5 @@
 ---
-fontsize: 11pt
+fontsize: 12pt
 geometry: margin=1in
 header-includes:
   - \usepackage{lineno}
@@ -9,7 +9,7 @@ header-includes:
   - \usepackage{rotating}
   - \usepackage{color, soul}
   - \usepackage[document]{ragged2e}
-layout: 11pt
+layout: 12pt
 linkcolor: black
 output:
   pdf_document:
@@ -23,7 +23,10 @@ urlcolor: black
 
 \begin{center}
 
-\Large{\textbf{Quantifying the limits to forecasting the impacts of environmental change on the Yellowstone bison population}}
+\phantom{nothing}
+\vspace{5em}
+
+\Large{Quantifying the limits to forecasting the impacts of environmental change on the Yellowstone bison population}
 
 \renewcommand*{\thefootnote}{\fnsymbol{footnote}}
 

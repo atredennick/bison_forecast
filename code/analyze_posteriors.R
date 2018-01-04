@@ -35,12 +35,12 @@ library(ecoforecastR) # MCMC manipulation (by M. Dietze)
 ####
 ####  LOAD FITTED MODELS -------------------------------------------------------
 ####
-swe_est_posts <- as.mcmc.list(list(readRDS("../results/swe_est_posteriors_chain1.RDS"),
-                                   readRDS("../results/swe_est_posteriors_chain2.RDS"),
-                                   readRDS("../results/swe_est_posteriors_chain3.RDS")))
-swe_avg_posts <- as.mcmc.list(list(readRDS("../results/swe_avg_posteriors_chain1.RDS"),
-                                   readRDS("../results/swe_avg_posteriors_chain2.RDS"),
-                                   readRDS("../results/swe_avg_posteriors_chain3.RDS")))
+swe_est_posts <- as.mcmc.list(list(readRDS("../results/ppt_est_posteriors_chain1.RDS"),
+                                   readRDS("../results/ppt_est_posteriors_chain2.RDS"),
+                                   readRDS("../results/ppt_est_posteriors_chain3.RDS")))
+swe_avg_posts <- as.mcmc.list(list(readRDS("../results/ppt_avg_posteriors_chain1.RDS"),
+                                   readRDS("../results/ppt_avg_posteriors_chain2.RDS"),
+                                   readRDS("../results/ppt_avg_posteriors_chain3.RDS")))
 
 
 
@@ -73,24 +73,28 @@ post_params <- post_params %>%
 
 docolor   <- "#278DAF"
 prior_col <- "#CF4C26"
+docolor   <- "grey90"
+prior_col <- "black"
 post_params$parameter <- as.factor(post_params$parameter)
 levels(post_params$parameter) <- c(expression(beta[0]), expression(beta[1]), "r", expression(sigma[p]))
 
 ggplot(post_params, aes(x = estimate, y = ..density..))+
-  geom_histogram(fill = docolor, color = "white", bins = 30)+
+  geom_histogram(fill = docolor, color = "black", bins = 30)+
+  # geom_line(data = filter(post_params, parameter == "r"),
+  #           aes(x = prior), 
+  #           stat = "density", 
+  #           color = "white",
+  #           size = 1.2)+
   geom_line(data = filter(post_params, parameter == "r"),
             aes(x = prior), 
             stat = "density", 
-            color = "white",
-            size = 1.2)+
-  geom_line(data = filter(post_params, parameter == "r"),
-            aes(x = prior), 
-            stat = "density", 
-            color = prior_col)+
+            color = prior_col,
+            linetype = 2,
+            size = 0.8)+
   facet_wrap(~parameter, scales = "free", ncol = 4, labeller = label_parsed)+
   ylab("Posterior density")+
   xlab("Parameter estimate")+
-  my_theme
+  theme_few()
 ggsave(filename = "../figures/bison_post_params.png", 
        height = 3, 
        width = 10, 

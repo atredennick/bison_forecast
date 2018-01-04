@@ -66,6 +66,8 @@ plot_data <- bison_dat %>%
 
 docolor  <- "#278DAF"
 altcolor <- "#CF4C26"
+docolor  <- "black"
+altcolor <- "black"
 bison_plot <- ggplot(plot_data, aes(x = year, y = count.mean, color = set))+
   geom_line(alpha = 0.6)+
   geom_point(size=1.5)+
@@ -75,7 +77,7 @@ bison_plot <- ggplot(plot_data, aes(x = year, y = count.mean, color = set))+
   scale_y_continuous(breaks = seq(0,6000,1000))+
   ylab("Number of bison")+
   xlab("Year")+
-  my_theme+
+  theme_few()+
   guides(color = FALSE)
 
 snow_plot <- ggplot(plot_data, aes(x = year, y = ppt_in, color = set))+
@@ -84,7 +86,7 @@ snow_plot <- ggplot(plot_data, aes(x = year, y = ppt_in, color = set))+
   scale_color_manual(values = c(docolor, altcolor))+
   ylab("January Precipitation (in)")+
   xlab("Year")+
-  my_theme+
+  theme_few()+
   guides(color = FALSE)
 
 the_plots <- list(bison_plot, snow_plot)

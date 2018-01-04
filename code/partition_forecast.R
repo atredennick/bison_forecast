@@ -98,18 +98,21 @@ calibration_plot <- ggplot(prediction_df, aes(x=year))+
               color=NA, 
               alpha=0.2)+
   geom_line(aes(y=median_prediction), color=pred_color, size = 0.2)+
-  geom_errorbar(data = filter(prediction_df, year <2011), aes(x = year, ymin=lower_observation, ymax=upper_observation), 
+  geom_errorbar(aes(ymin=lower_observation, ymax=upper_observation), 
                 width=0.5, 
                 color=obs_color, 
                 size=0.2)+
-  geom_point(data = filter(prediction_df, year <2011), aes(x = year, y=observation), color=obs_color, size=0.5)+
+  geom_point(aes(y=observation, shape = set, fill = set), color=obs_color, size=1)+
   geom_vline(aes(xintercept=2010), linetype=2,color="grey55")+
-  # geom_col(data = bison_dat, aes(x = year, y = wint.removal), color = "grey55", fill = "grey55", width = 0.3)+
-  scale_y_continuous(breaks = seq(0,9000,1000))+
-  # scale_x_continuous(breaks = seq(1970,2015,5))+
+  geom_col(data = bison_dat, aes(x = year, y = wint.removal), color = "grey55", fill = "grey55", width = 0.3)+
+  scale_y_continuous(breaks = seq(0,10000,2000))+
+  scale_shape_manual(values = c(19,21), name = NULL, labels = c("Training data", "Validation data"))+
+  scale_fill_manual(values = c("black","grey"), name = NULL, labels = c("Training data", "Validation data"))+
   ylab("Number of bison")+
   xlab("Year")+
-  theme_few()
+  theme_few()+
+  guides(shape = guide_legend(override.aes = list(size=2, fill = c("black","white"))))+
+  theme(legend.position = c(0.2,0.85))
 
 
 
