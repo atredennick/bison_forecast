@@ -144,7 +144,7 @@ calibration_plot <- ggplot(prediction_df, aes(x=year))+
   scale_shape_manual(values = c(19,21), 
                      name = NULL, 
                      labels = c("Training data", "Validation data"))+
-  scale_fill_manual(values = c("black","grey"), 
+  scale_fill_manual(values = c("black","white"), 
                     name = NULL, 
                     labels = c("Training data", "Validation data"))+
   ylab("Number of bison")+
@@ -152,7 +152,7 @@ calibration_plot <- ggplot(prediction_df, aes(x=year))+
   theme_few()+
   guides(shape = guide_legend(override.aes = list(size=2, 
                                                   fill = c("black","white"))))+
-  theme(legend.position = c(0.2,0.85))
+  theme(legend.position = c(0.21,0.85))
 
 
 
@@ -190,6 +190,7 @@ gcm_precip <- read_csv("../data/CMIP_YNP/bcca5/pr.csv", col_names = col_names) %
 ####
 ##  Function for the ecological process (Gompertz population growth)
 iterate_process <- function(Nnow, xnow, r, b, b1, sd_proc, E) {
+  xnow[xnow>5] <- 5
   # Log integration of extractions
   e <- log( abs( 1 - (E / Nnow ) ) )
   
@@ -227,7 +228,7 @@ varI <- apply(forecasts,2,var)
 
 ##  Initial conditions and parameter uncertainty
 forecast_steps <- 7
-num_iters      <- 5000
+num_iters      <- 100000
 E              <- validation_dat$wint.removal
 z              <- sample(predictions[,nrow(training_dat)], num_iters, replace = TRUE)
 params         <- as.matrix(fitted_model$params)
