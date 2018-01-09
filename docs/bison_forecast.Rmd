@@ -120,10 +120,11 @@ Our process model represents the population dynamics of the Yellowstone bison us
 \vspace{-2em}
 
 \begin{align}
-\text{log}(z_{(t)}) \sim \text{Normal}\left( \text{log}(z_{(t-1)}) + r + b_0 \text{log}(z_{(t-1)}) + b_1 x_{(t)}, \sigma^2_\text{p} \right),
+\mu_{(t)} &= \text{log}(z_{(t-1)}) + e_{(t-1)} + r + b_0 \left( \text{log}(z_{(t-1)}) + e_{(t-1)} \right) + b_1 x_{(t)}, \\
+\text{log}(z_{(t)}) &\sim \text{Normal}\left( \mu_t, \sigma^2_\text{p} \right),
 \end{align}
 
-where the determinstic model $\text{log}(z_{(t-1)}) + r + b_0 \text{log}(z_{(t-1)}) + b_1 x_{(t)}$ is a Gompertz model of population growth that predicts the mean of $z_{(t)}$ on the log scale as function of the true state of the log population at time $t-1$ ($z_{(t-1)}$), the intrinsic, per capita rate of increase (*r*), the strength of density-dependence ($b_0$), and the effect ($b_1$) of mean annual snow water equivalent at time *t* ($x_{(t)}$).
+where the determinstic model for $\mu_{(t)}$ is a Gompertz model of population growth that predicts the mean of $z_{(t)}$ on the log scale as function of the true state of the log population at time $t-1$ ($z_{(t-1)}$), the intrinsic, per capita rate of increase (*r*), the strength of density-dependence ($b_0$), the effect ($b_1$) of mean annual snow water equivalent at time *t* ($x_{(t)}$), and $e_{(t)}$ is the logarithmic integration of extractions occuring between observations in year $t-1$ and year $t$.
 The quantity $\sigma^2_\text{p}$ is the process variance on the log scale, which accounts for all the drivers of the true state that are not found in the determinstic model.
 
 We used a negative binomial likelihood to link the observations ($\textbf{y}$) to the estimated latent states ($\textbf{z}$).
