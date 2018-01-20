@@ -75,6 +75,8 @@ docolor   <- "#278DAF"
 prior_col <- "#CF4C26"
 docolor   <- "grey90"
 prior_col <- "black"
+# docolor <- "#307129"
+# prior_col <- "#EB6625"
 post_params$parameter <- as.factor(post_params$parameter)
 levels(post_params$parameter) <- c(expression(beta[0]), expression(beta[1]), "r", expression(sigma[p]))
 
