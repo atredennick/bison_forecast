@@ -26,7 +26,7 @@ urlcolor: black
 \phantom{nothing}
 \vspace{5em}
 
-\Large{Quantifying the limits to forecasting the impacts of environmental change on the Yellowstone bison population}
+\Large{Quantifying the current limits to forecasting the impacts of environmental change on the Yellowstone bison population}
 
 \renewcommand*{\thefootnote}{\fnsymbol{footnote}}
 
@@ -42,7 +42,7 @@ urlcolor: black
 
 \vspace{2em}
 
-\textbf{Running Head}: Limits to bison forecasting
+\textbf{Running Head}: Current limits to bison forecasting
 
 \textbf{Corresponding Author}: \\
 \hspace{2em}Andrew Tredennick \\  
@@ -68,8 +68,8 @@ An interesting, but often overlooked, complication of ecological forecasting is 
 In many cases the limits to ecological forecasting lie in the environmental covariates we choose, because even if those covariates produce better understanding of the system, uncertainty in their forecast will propogate through to impact the uncertainty of the focal state.
 Thus, understanding when and by how much forecasts are limited by the uncertainty of environmental covariates is an urgent need.
 Here we use new methods to explicitly quantify the different sources of uncertainty on forecasts of the Yellowstone bison population.
-We fit a Bayesian state-space model to 41 years of population counts assuming Gompertz population growth with an environmental effect of annual accumulated snow water equivalent.
-We made forecasts for an additional seven years and found (1) that including known values of mean annual snow water equivalent increased out-of-sample forecast accuracy and (2) that xx - xx\% of forecast error was associated with uncertainty in future projections of snow water equivalent.
+We fit a Bayesian state-space model to 41 years of population counts assuming Gompertz population growth with an environmental effect of cumulative January precipitation.
+We made forecasts for an additional seven years and found (1) that including known values of mean annual snow water equivalent increased out-of-sample forecast accuracy and (2) that xx - xx\% of forecast error was associated with uncertainty in future projections of January precipitation.
 In comparison, only x\% of forecast error was associated with uncertainty in initial conditions (e.g., population state at $t-1$), and fell to x\% at a forecast horizon of seven years.
 We used simulations to show how forecast error decreased with increased precision of snow water equivalent forecasts.
 Our findings highlight the necessity of partitioning forecast error into quantifiable components.
@@ -95,10 +95,10 @@ Aerial counts of the Yellowstone bison population from 1970-2017 (Fig. 1A) were 
 Counts typically occurred four times a year.
 We used summer counts only because the summer aggregation of bison tends to produce more accurate counts (Hobbs et al. 2015).
 Replicate counts were taken in 41 of the 48 years, and from these replicates we estimated the mean annual total population in the park and the annual standard deviation of counts (i.e., observation error).
+We also include known harvest counts in our population model (Fig. 1A), as described below.
 
-We used annual accumulated snow water equivalent (SWE, mm) as an environmental covariate in our population model.
-SWE data came from the West Yellowstone SNOTEL station (Site #924).
-We downloaded the SNOTEL data using the ```snotelr``` package in R and then summed SWE across days for each year.
+We used cumulative January precipitation as an environmental covariate in our population model because winter snow limits the ability of bison to access forage.
+We could have used snow water equivalent observations from SNOTEL sites, but future projections of snow pack are much more difficult to generate and obtain the projections of precipitation.
 
 ##  State-space model
 We used a Bayesian state-space model to obtain posterior distributions of all unknown parameters, latent states, and forecasts of future states.
@@ -111,7 +111,7 @@ The fully specified model, including a model of the ecological process, a model 
 \end{align}
 
 where the notation $[a|b,c]$ reads as the probability or probability density of *a* conditional on *b* and *c* (Hobbs and Hooten 2015).
-$\boldsymbol{\theta}_\text{p}$ is a vector of parameters in the process model, $z_{(t)}$ is the latent, or unobservable and true, state of the bison population abundance at time *t*, $y_{(t)}$ is the observed state of bison population abundance at time *t*, $x_{(t)}$ is the standardized value of mean annual SWE at time *t*, and $\kappa$ is a variance term associated with the model likelihood (see below).
+$\boldsymbol{\theta}_\text{p}$ is a vector of parameters in the process model, $z_{(t)}$ is the latent, or unobservable and true, state of the bison population abundance at time *t*, $y_{(t)}$ is the observed state of bison population abundance at time *t*, $x_{(t)}$ is the standardized value of cumulative January precipitation at time *t*, and $\kappa$ is a variance term associated with the model likelihood (see below).
 Note that the product associated with the "process model" applies over seven more years than the product associated with the "data model."
 The extra seven years are forecasts of the latent state seven years into the future, for which no likelihood can be calculated.
 
@@ -124,15 +124,12 @@ Our process model represents the population dynamics of the Yellowstone bison us
 \text{log}(z_{(t)}) &\sim \text{Normal}\left( \mu_t, \sigma^2_\text{p} \right),
 \end{align}
 
-where the determinstic model for $\mu_{(t)}$ is a Gompertz model of population growth that predicts the mean of $z_{(t)}$ on the log scale as function of the true state of the log population at time $t-1$ ($z_{(t-1)}$), the intrinsic, per capita rate of increase (*r*), the strength of density-dependence ($b_0$), the effect ($b_1$) of mean annual snow water equivalent at time *t* ($x_{(t)}$), and $e_{(t)}$ is the logarithmic integration of extractions occuring between observations in year $t-1$ and year $t$.
+where the determinstic model for $\mu_{(t)}$ is a Gompertz model of population growth that predicts the mean of $z_{(t)}$ on the log scale as function of the true state of the log population at time $t-1$ ($z_{(t-1)}$), the intrinsic, per capita rate of increase (*r*), the strength of density-dependence ($b_0$), the effect ($b_1$) of January precipitation at time *t* ($x_{(t)}$), and $e_{(t)}$ is the logarithmic integration of extractions occuring between observations in year $t-1$ and year $t$.
 The quantity $\sigma^2_\text{p}$ is the process variance on the log scale, which accounts for all the drivers of the true state that are not found in the determinstic model.
 
 We used a negative binomial likelihood to link the observations ($\textbf{y}$) to the estimated latent states ($\textbf{z}$).
 The likelihood is $y_{(t)} \sim \text{NB} \left(  z_{(t)} , \kappa \right)$.
-As mentioned earlier, replicate observations were not available for seven of the 48 years.
-In those seven years we could not estimate observation error.
-Therefore, in any year for which observation error could not be estimated, we set observation variance to the maximum value observed across the time series.
-This is a conservative appproach that ensures our estimates of the latent states in those years are not overly confident.
+We used a negative binomial likelihood rather than a poisson because there was evidence of over-dispersion.
 
 Our state-space model requires prior distributions for all parameters and for the initial condition of $z$.
 We used an informative prior for the intrinsic growth rate, $r$, based on the population growth ($\lambda$) reported by Hobbs et al. (2015).
@@ -243,7 +240,7 @@ Something profound...
 \begin{figure}[!ht]
   \centering
       \includegraphics{../figures/bison_post_params.png}
-  \caption{Posterior distributions of select model parameters: $b=$ density-dependence, $b_1=$ effect of SWE, $r=$ per capita growth rate, $\sigma_{\text{p}}=$ process error. The orange line in the panel for $r$ is the informed prior distribution. Prior distributions are not shown for other parameters because they are not visible on the scale of the posteriors.}
+  \caption{Posterior distributions of select model parameters: $\beta_0=$ density-dependence, $\beta_1=$ effect of January precipitation, $r=$ per capita growth rate, $\sigma_{\text{p}}=$ process error. The dashed line in the panel for $r$ is the informed prior distribution. Prior distributions are not shown for other parameters because they are not visible on the scale of the posteriors.}
 \end{figure}
 
 \newpage{}
