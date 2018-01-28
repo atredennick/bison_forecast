@@ -118,8 +118,8 @@ prediction_df      <- data.frame(year = bison_dat$year,
 ####
 ####  PLOT DATA AND POSTERIOR PREDICTIONS --------------------------------------
 ####
-pred_color <- "#CF4C26"
-obs_color  <- "#278DAF"
+# obs_color <- "#CF4C26"
+# pred_color  <- "#278DAF"
 pred_color <- "black"
 obs_color  <- "black"
 calibration_plot <- ggplot(prediction_df, aes(x=year))+
