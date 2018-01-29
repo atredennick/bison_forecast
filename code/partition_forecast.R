@@ -314,3 +314,21 @@ ggsave(filename = "../figures/bison_combined.png",
        height = 6,
        units = "in",
        dpi =200)
+
+
+
+####
+####  PLOT THE WEATHER PROJECTIONS ---------------------------------------------
+####
+clim_proj <- as.data.frame(x) %>%
+  mutate(year = 1:7) %>%
+  gather(key = model, value = precip, -year)
+
+library(viridis)
+ggplot(filter(clim_proj, precip < 2.6), aes(x = year+2010, y = precip, color = model))+
+  geom_line()+
+  scale_color_viridis(discrete = TRUE)+
+  guides(color = FALSE)+
+  xlab("Year")+
+  ylab("Standardized Precipitation")+
+  theme_few()
