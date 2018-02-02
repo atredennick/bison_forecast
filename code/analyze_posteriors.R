@@ -104,6 +104,15 @@ ggsave(filename = "../figures/bison_post_params.png",
        dpi = 120)
 
 
+##  Just the climate effect, for presentations
+docolor <- "#307129" #green to match curren beamer style
+ggplot(filter(post_params, parameter == "beta[1]"), aes(x = estimate, y = ..density..))+
+  geom_histogram(fill = docolor, color = "white", bins = 30)+
+  geom_vline(aes(xintercept = 0), color = "grey35", linetype = 2)+
+  ylab("Posterior density")+
+  xlab("Effect of Jan. Precip.")+
+  theme_few()
+
 
 ####
 ####  MCMC DIAGNOSTICS ---------------------------------------------------------
