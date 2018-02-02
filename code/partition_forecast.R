@@ -289,7 +289,6 @@ V.pred.sim.rel <- apply(V.pred.sim,2,function(x) {x/max(x)})
 ####
 var_rel_preds <- as.data.frame(t(V.pred.sim.rel*100))
 var_rel_preds$x <- 1:nrow(var_rel_preds)
-my_cols <- c("#0A4D5B", "#139AB8", "#39B181","grey")
 my_cols <- c("black", "grey55", "grey70","grey90")
 variance_plot <- ggplot(data=var_rel_preds, aes(x=x))+
   geom_ribbon(aes(ymin=0, ymax=varIPDE), fill=my_cols[4])+
@@ -301,6 +300,27 @@ variance_plot <- ggplot(data=var_rel_preds, aes(x=x))+
   scale_x_continuous(breaks=seq(1,forecast_steps,by=1), 
                      labels=paste(seq(1,forecast_steps,by=1), "yrs"))+
   scale_y_continuous(labels=paste0(seq(0,100,25),"%"))+
+  theme_few()
+
+##  For presentations
+
+my_cols <- c("#EB6C26", "#D5DD7F", "#408CAD","grey")
+tmpvar <- var_rel_preds
+colnames(tmpvar) <- c("AvarIPDE", "BvarIPD", "CvarIP", "DvarI", "x")
+var2 <- tmpvar %>%
+  gather(simtype, variance, -x)
+
+ggplot(var2, aes(x=x, fill = simtype))+
+  geom_ribbon(aes(ymin=0, ymax=variance), color = "black")+
+  ylab("Percentage of total variance (%)")+
+  xlab("Forecast steps")+
+  scale_fill_manual(values = my_cols, name = NULL, 
+                    labels = c("Process error", "Driver uncertainty", "Parameter uncertainty", "Initial conditions"))+
+  scale_x_continuous(breaks=seq(2,forecast_steps,by=2), 
+                     labels=paste(seq(2,forecast_steps,by=2), "yrs"),
+                     expand = c(0, 0))+
+  scale_y_continuous(labels=paste0(seq(0,100,25),"%"),
+                     expand = c(0, 0))+
   theme_few()
 
 
