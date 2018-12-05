@@ -81,37 +81,37 @@ post_params$parameter <- as.factor(post_params$parameter)
 levels(post_params$parameter) <- c(expression(beta[0]), expression(beta[1]), "r", expression(sigma[p]))
 
 ggplot(post_params, aes(x = estimate, y = ..density..))+
-  geom_histogram(fill = docolor, color = "black", bins = 30)+
+  geom_histogram(fill = "tan", bins = 30, color = "white")+
   # geom_line(data = filter(post_params, parameter == "r"),
   #           aes(x = prior), 
   #           stat = "density", 
   #           color = "white",
   #           size = 1.2)+
-  geom_line(data = filter(post_params, parameter == "r"),
-            aes(x = prior), 
-            stat = "density", 
-            color = prior_col,
-            linetype = 2,
-            size = 0.8)+
+  # geom_line(data = filter(post_params, parameter == "r"),
+  #           aes(x = prior), 
+  #           stat = "density", 
+  #           color = "dodgerblue4", alpha = 0.7,
+  #           linetype = 2,
+  #           size = 0.6)+
   facet_wrap(~parameter, scales = "free", ncol = 4, labeller = label_parsed)+
   ylab("Posterior density")+
-  xlab("Parameter estimate")+
+  xlab("Parameter value")+
   theme_few()
-ggsave(filename = "../figures/bison_post_params.png", 
-       height = 3, 
-       width = 10, 
-       units = "in", 
-       dpi = 120)
+# ggsave(filename = "../figures/bison_post_params.png", 
+#        height = 3, 
+#        width = 10, 
+#        units = "in", 
+#        dpi = 120)
 
 
 ##  Just the climate effect, for presentations
-docolor <- "#307129" #green to match curren beamer style
-ggplot(filter(post_params, parameter == "beta[1]"), aes(x = estimate, y = ..density..))+
-  geom_histogram(fill = docolor, color = "white", bins = 30)+
-  geom_vline(aes(xintercept = 0), color = "grey35", linetype = 2)+
-  ylab("Posterior density")+
-  xlab("Effect of Jan. Precip.")+
-  theme_few()
+# docolor <- "#307129" #green to match curren beamer style
+# ggplot(filter(post_params, parameter == "beta[1]"), aes(x = estimate, y = ..density..))+
+#   geom_histogram(fill = docolor, color = "white", bins = 30)+
+#   geom_vline(aes(xintercept = 0), color = "grey35", linetype = 2)+
+#   ylab("Posterior density")+
+#   xlab("Effect of Jan. Precip.")+
+#   theme_few()
 
 
 ####

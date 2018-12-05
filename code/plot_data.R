@@ -68,32 +68,29 @@ docolor  <- "#278DAF"
 altcolor <- "#CF4C26"
 docolor  <- "black"
 altcolor <- "black"
-bison_plot <- ggplot(plot_data, aes(x = year, y = count.mean, color = set))+
-  geom_line(alpha = 0.6)+
-  geom_point(size=1.5)+
-  geom_errorbar(aes(ymin = count.mean-count.sd, ymax = count.mean+count.sd), width=0.5, size=0.5)+
-  geom_col(aes(y = wint.removal), color = "grey55", fill = "grey55", width = 0.3)+
-  scale_color_manual(values = c(docolor, altcolor))+
+bison_plot <- ggplot(plot_data, aes(x = year, y = count.mean))+
+  # geom_line(alpha = 0.6)+
+  geom_point(size=1.5, color = "tan")+
+  geom_errorbar(aes(ymin = count.mean-count.sd, ymax = count.mean+count.sd), width=0.5, size=0.5, color = "tan")+
+  geom_col(aes(y = wint.removal), fill = "dodgerblue4", width = 0.3, alpha = 0.7)+
+  annotate(geom = "text", x = 2014, y = 1800, label = "number\nharvested", alpha = 0.7, color = "dodgerblue4", size = 2.8) +
   scale_y_continuous(breaks = seq(0,6000,1000))+
   ylab("Number of bison")+
   xlab("Year")+
-  theme_few()+
-  guides(color = FALSE)
+  theme_classic(base_size = 14)
 
-snow_plot <- ggplot(plot_data, aes(x = year, y = ppt_in, color = set))+
-  geom_line(alpha = 0.6)+
-  geom_point(size=1.5)+
-  scale_color_manual(values = c(docolor, altcolor))+
-  ylab("January Precipitation (in)")+
+snow_plot <- ggplot(plot_data, aes(x = year, y = ppt_in))+
+  geom_line(alpha = 0.6, color = "tan")+
+  geom_point(size=1.5, color = "tan")+
+  ylab("January precipitation (in)")+
   xlab("Year")+
-  theme_few()+
-  guides(color = FALSE)
+  theme_classic(base_size = 14)
 
 the_plots <- list(bison_plot, snow_plot)
 suppressWarnings( # Ignore warning about 6 NA rows for errorbars where sd not reported
-  plot_grid(plotlist = the_plots, labels = "AUTO", ncol = length(the_plots))
+  plot_grid(plotlist = the_plots,  ncol = length(the_plots), scale = 0.9)
 )
-ggsave(filename = "../figures/bison_data_plots.png", height = 3, width = 8, units = "in", dpi = 120)
+ggsave(filename = "../figures/bison_data_plots.pdf", height = 3.8, width = 10, units = "in", dpi = 120)
 
 
 

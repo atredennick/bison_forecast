@@ -77,7 +77,8 @@ my_model <- "
     eta        ~ dunif(0, 50)
     
     #### Fixed Effects Priors
-    r  ~ dnorm(0.1, 1/0.02^2)  # intrinsic growth rate, informed prior
+    # r  ~ dnorm(0.1, 1/0.02^2)  # intrinsic growth rate, informed prior
+    r ~ dnorm(0, 0.0001)
     b  ~ dnorm(0,1/2^2)I(-2,2) # strength of density dependence, bounded
     b1 ~ dnorm(0,0.0001)       # effect of Jan. precip in year t
     
@@ -88,7 +89,7 @@ my_model <- "
     #### Process Model
     for(t in 2:npreds){
       # Calculate log integration of extractions
-      e[t] = log( abs( 1 - (E[t] / z[t-1]) ) ) 
+      e[t] = log( abs( 1 - (E[t-1] / z[t-1]) ) ) 
 
       # Gompertz growth, on log scale
       mu[t]   <- zlog[t-1] + e[t] + r + b*(zlog[t-1] + e[t]) + b1*x[t]
@@ -183,10 +184,10 @@ mc3     <- jags.model(file = textConnection(my_model),
                       n.chains = length(inits), 
                       n.adapt = 5000, 
                       inits = inits) 
-           update(mc3, n.iter = 10000) 
+           update(mc3, n.iter = 20000) 
 mc3.out <- coda.samples(model=mc3, 
                         variable.names=out_variables, 
-                        n.iter=10000) 
+                        n.iter=20000) 
 
 # ggs(mc3.out) %>%
 #   filter(Parameter %in% c("b1")) %>%

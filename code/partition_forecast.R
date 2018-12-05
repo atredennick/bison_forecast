@@ -120,8 +120,8 @@ prediction_df      <- data.frame(year = bison_dat$year,
 ####
 # obs_color <- "#CF4C26"
 # pred_color  <- "#278DAF"
-pred_color <- "black"
-obs_color  <- "black"
+pred_color <- "tan"
+obs_color  <- "tan"
 calibration_plot <- ggplot(prediction_df, aes(x=year))+
   geom_ribbon(aes(ymax=upper_prediction, ymin=lower_prediction),
               fill=pred_color, 
@@ -135,11 +135,9 @@ calibration_plot <- ggplot(prediction_df, aes(x=year))+
   geom_point(aes(y=observation, shape = set, fill = set), 
              color=obs_color, 
              size=1)+
-  geom_vline(aes(xintercept=2010), linetype=2,color="grey55")+
+  geom_vline(aes(xintercept=2010.5), linetype=3,color="grey35")+
   geom_col(data = bison_dat, aes(x = year, y = wint.removal),
-           color = "grey55", 
-           fill = "grey55",
-           width = 0.3)+
+           fill = "dodgerblue4", width = 0.3, alpha = 0.7)+
   scale_y_continuous(breaks = seq(0,10000,2000))+
   scale_shape_manual(values = c(19,21), 
                      name = NULL, 
@@ -149,7 +147,7 @@ calibration_plot <- ggplot(prediction_df, aes(x=year))+
                     labels = c("Training data", "Validation data"))+
   ylab("Number of bison")+
   xlab("Year")+
-  theme_few()+
+  theme_classic(base_size = 14)+
   guides(shape = guide_legend(override.aes = list(size=2, 
                                                   fill = c("black","white"))))+
   theme(legend.position = c(0.21,0.85))
