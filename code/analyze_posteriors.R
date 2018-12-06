@@ -93,6 +93,7 @@ ggplot(post_params, aes(x = estimate, y = ..density..))+
   #           color = "dodgerblue4", alpha = 0.7,
   #           linetype = 2,
   #           size = 0.6)+
+  geom_vline(aes(xintercept = 0), color = "dodgerblue4", linetype = 3)+
   facet_wrap(~parameter, scales = "free", ncol = 4, labeller = label_parsed)+
   ylab("Posterior density")+
   xlab("Parameter value")+

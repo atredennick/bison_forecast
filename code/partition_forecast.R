@@ -206,7 +206,7 @@ iterate_process <- function(Nnow, xnow, r, b, b1, sd_proc, E) {
 ##  Initial condition uncertainty: make forecasts from all MCMC iterations of
 ##    the final year, but use mean parameter values and no process error.
 forecast_steps <- 7
-num_iters      <- 5000
+num_iters      <- 500000
 E              <- validation_dat$wint.removal
 z              <- sample(predictions[,nrow(training_dat)], num_iters, replace = TRUE)
 param_summary  <- summary(fitted_model$params)$quantile
@@ -226,7 +226,7 @@ varI <- apply(forecasts,2,var)
 
 ##  Initial conditions and parameter uncertainty
 forecast_steps <- 7
-num_iters      <- 100000
+num_iters      <- 500000
 E              <- validation_dat$wint.removal
 z              <- sample(predictions[,nrow(training_dat)], num_iters, replace = TRUE)
 params         <- as.matrix(fitted_model$params)
