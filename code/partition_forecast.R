@@ -33,6 +33,14 @@ library(ecoforecastR) # MCMC manipulation (by M. Dietze)
 source("./utilities/plotting_theme.R")
 
 
+drop_outliers <- function(x, lower_threshold = 0.1, upper_threshold = 0.9){
+  upper_cut <- quantile(x, upper_threshold)
+  lower_cut <- quantile(x, lower_threshold)
+  x[x > upper_cut] <- NA
+  x[x < lower_cut] <- NA
+  return(x)
+}
+
 
 ####
 ####  LOAD DATA AND MCMCs ------------------------------------------------------
@@ -188,7 +196,7 @@ gcm_precip <- read_csv("../data/CMIP_YNP/bcca5/pr.csv", col_names = col_names) %
 ####
 ##  Function for the ecological process (Gompertz population growth)
 iterate_process <- function(Nnow, xnow, r, b, b1, sd_proc, E) {
-  xnow[xnow>5] <- 5
+  # xnow[xnow>5] <- 5
   # Log integration of extractions
   e <- log( abs( 1 - (E / Nnow ) ) )
   
@@ -206,9 +214,9 @@ iterate_process <- function(Nnow, xnow, r, b, b1, sd_proc, E) {
 ##  Initial condition uncertainty: make forecasts from all MCMC iterations of
 ##    the final year, but use mean parameter values and no process error.
 forecast_steps <- 7
-num_iters      <- 500000
-E              <- validation_dat$wint.removal
-z              <- sample(predictions[,nrow(training_dat)], num_iters, replace = TRUE)
+num_iters      <- nrow(predictions)
+E              <- c(tail(training_dat$wint.removal,1), head(validation_dat$wint.removal,6))
+z              <- predictions[,nrow(training_dat)]
 param_summary  <- summary(fitted_model$params)$quantile
 r              <- param_summary[6,3]
 b              <- param_summary[1,3]
@@ -221,19 +229,16 @@ for(t in 1:forecast_steps){
   z <- iterate_process(Nnow = z, xnow = x[t], r, b, b1, sd_proc = 0, E = E[t])
   forecasts[,t] <- z
 }
-varI <- apply(forecasts,2,var)
+forecasts <- apply(forecasts, 2, drop_outliers)
+varI <- apply(forecasts,2,var, na.rm = TRUE)
 
 
 ##  Initial conditions and parameter uncertainty
 forecast_steps <- 7
-num_iters      <- 500000
-E              <- validation_dat$wint.removal
-z              <- sample(predictions[,nrow(training_dat)], num_iters, replace = TRUE)
 params         <- as.matrix(fitted_model$params)
-sample_params  <- sample.int(nrow(params), size = num_iters, replace = TRUE)
-r              <- params[sample_params,"r"]
-b              <- params[sample_params,"b"]
-b1             <- params[sample_params,"b1"]
+r              <- params[,"r"]
+b              <- params[,"b"]
+b1             <- params[,"b1"]
 sd_proc        <- param_summary[7,3]
 x              <- scl_fut_ppt
 forecasts      <- matrix(data = NA, nrow = num_iters, ncol = forecast_steps)
@@ -242,15 +247,12 @@ for(t in 1:forecast_steps){
   z <- iterate_process(Nnow = z, xnow = x[t], r, b, b1, sd_proc = 0, E = E[t])
   forecasts[,t] <- z
 }
-varIP <- apply(forecasts,2,var)
+# forecasts[forecasts > 10000] <- NA
+forecasts <- apply(forecasts, 2, drop_outliers)
+varIP <- apply(forecasts,2,var, na.rm = TRUE)
 
 
 ##  Initial conditions, parameter, and driver uncertainty
-z              <- sample(predictions[,nrow(bison_dat)], num_iters, replace = TRUE)
-r              <- params[sample_params,"r"]
-b              <- params[sample_params,"b"]
-b1             <- params[sample_params,"b1"]
-sd_proc        <- param_summary[7,3]
 xsamps         <- sample(x = ncol(gcm_precip[2:ncol(gcm_precip)]), size = num_iters, replace = TRUE)
 x              <- as.matrix(gcm_precip[2:ncol(gcm_precip)])
 forecasts      <- matrix(data = NA, nrow = num_iters, ncol = forecast_steps)
@@ -259,28 +261,27 @@ for(t in 1:forecast_steps){
   z <- iterate_process(Nnow = z, xnow = as.numeric(x[t,xsamps]), r, b, b1, sd_proc = 0, E = E[t])
   forecasts[,t] <- z
 }
-varIPD <- apply(forecasts,2,var)
+# forecasts[forecasts > 10000] <- NA
+forecasts <- apply(forecasts, 2, drop_outliers)
+varIPD <- apply(forecasts,2,var, na.rm = TRUE)
 
 ##  Initial conditions, parameter, driver, and process uncertainty
-z              <- sample(predictions[,nrow(bison_dat)], num_iters, replace = TRUE)
-r              <- params[sample_params,"r"]
-b              <- params[sample_params,"b"]
-b1             <- params[sample_params,"b1"]
-sd_proc        <- param_summary[7,3]
-x              <- as.matrix(gcm_precip[2:ncol(gcm_precip)])
 forecasts      <- matrix(data = NA, nrow = num_iters, ncol = forecast_steps)
 
 for(t in 1:forecast_steps){
   z <- iterate_process(Nnow = z, xnow = as.numeric(x[t,xsamps]), r, b, b1, sd_proc = sd_proc, E = E[t])
   forecasts[,t] <- z
 }
-varIPDE <- apply(forecasts,2,var)
+# forecasts[forecasts > 10000] <- NA
+forecasts <- apply(forecasts, 2, drop_outliers)
+varIPDE <- apply(forecasts,2,var, na.rm = TRUE)
 
 
 V.pred.sim     <- rbind(varIPDE,varIPD,varIP,varI)
 V.pred.sim.rel <- apply(V.pred.sim,2,function(x) {x/max(x)})
 
-
+# dim(V.pred.sim)
+# matplot(t(sqrt(V.pred.sim)), type = "l")
 
 ####
 ####  PLOT THE FORECASTING UNCERTAINTY PARTITION -------------------------------
@@ -309,29 +310,31 @@ var2 <- tmpvar %>%
   gather(simtype, variance, -x)
 
 ggplot(var2, aes(x=x, fill = simtype))+
-  geom_ribbon(aes(ymin=0, ymax=variance), color = "black")+
+  geom_ribbon(aes(ymin=0, ymax=variance), color = "white")+
   ylab("Percentage of total variance (%)")+
   xlab("Forecast steps")+
-  scale_fill_manual(values = my_cols, name = NULL, 
-                    labels = c("Process error", "Driver uncertainty", "Parameter uncertainty", "Initial conditions"))+
+  scale_fill_viridis_d(name = NULL, 
+                       labels = c("Process error", "Driver uncertainty", "Parameter uncertainty", "Initial conditions"))+
+  # scale_fill_manual(values = my_cols, name = NULL, 
+                    # labels = c("Process error", "Driver uncertainty", "Parameter uncertainty", "Initial conditions"))+
   scale_x_continuous(breaks=seq(2,forecast_steps,by=2), 
                      labels=paste(seq(2,forecast_steps,by=2), "yrs"),
                      expand = c(0, 0))+
   scale_y_continuous(labels=paste0(seq(0,100,25),"%"),
                      expand = c(0, 0))+
-  theme_few()
+  theme_minimal(base_size = 14)
 
 
 
 ####
 ####  COMBINE PLOTS AND SAVE ---------------------------------------------------
-####
-plot_grid(calibration_plot, variance_plot, nrow = 2, labels = "AUTO")
-ggsave(filename = "../figures/bison_combined.png",
-       width = 4,
-       height = 6,
-       units = "in",
-       dpi =200)
+# ####
+# plot_grid(calibration_plot, variance_plot, nrow = 2, labels = "AUTO")
+# ggsave(filename = "../figures/bison_combined.png",
+#        width = 4,
+#        height = 6,
+#        units = "in",
+#        dpi =200)
 
 
 
@@ -343,10 +346,12 @@ clim_proj <- as.data.frame(x) %>%
   gather(key = model, value = precip, -year)
 
 library(viridis)
-ggplot(filter(clim_proj, precip < 2.6), aes(x = year+2010, y = precip, color = model))+
+ggplot(filter(clim_proj), aes(x = year, y = precip, color = model))+
   geom_line()+
   scale_color_viridis(discrete = TRUE)+
   guides(color = FALSE)+
-  xlab("Year")+
+  xlab("Forecast steps")+
   ylab("Standardized Precipitation")+
-  theme_few()
+  scale_x_continuous(breaks=seq(2,forecast_steps,by=2), 
+                     labels=paste(seq(2,forecast_steps,by=2), "yrs"))+
+  theme_classic(base_size = 14)
